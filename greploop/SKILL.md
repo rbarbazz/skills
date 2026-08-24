@@ -1,6 +1,6 @@
 ---
 name: greploop
-description: Iterate a draft PR through Greptile reviews until 5/5 confidence — auto-fix mechanical findings, ask about judgment calls, push, re-review.
+description: Iterate a draft PR through Greptile reviews until 5/5 confidence — recommend a fix for every finding, apply only what the user approves, push, re-review.
 disable-model-invocation: true
 ---
 
@@ -48,14 +48,11 @@ Description pass on success: read the current PR description and compare it agai
 
 ### 4. Triage every finding
 
-Sort each unresolved Greptile comment into exactly one bucket. When unsure, it is judgment.
+Every code change goes through the user: read each unresolved Greptile comment, form a recommendation, and leave the code untouched until the user approves.
 
-- **Mechanical** — the fix follows directly from the comment and no reasonable teammate would debate it: null check, typo, wrong variable, missing `await`, dead code, off-by-one, unhandled error on an obvious path. Fix it in code now.
-- **Judgment** — anything carrying a tradeoff: design or API change, behavior change, scope beyond this diff, performance vs readability, or a comment that might simply be wrong. Leave the code alone and collect it.
+For each comment, work out the fix options you see and pick the one you would apply. Then present all findings to the user in one batch (AskUserQuestion, one entry per item: the comment and file:line, then the fix options). Put your pick first, labeled `(Recommended)`, and always include a "leave as is" option. Apply exactly the fixes the user chooses. For a declined item (the user picks "leave as is" or gives their own answer), reply on the thread with the user's one-line reasoning.
 
-After all mechanical fixes are in, present the judgment items to the user in one batch (AskUserQuestion, one entry per item: the comment and file:line, then the fix options you see). Offer the plausible fixes as options, and put the one you would apply first, labeled `(Recommended)`. Apply the chosen fix. For a declined item (the user picks "leave as is" or gives their own answer), reply on the thread with the user's one-line reasoning.
-
-Triage is complete only when every unresolved Greptile comment sits in a bucket and has been fixed, approved, or declined.
+Triage is complete only when every unresolved Greptile comment has been approved-and-fixed or declined by the user.
 
 ### 5. Verify, push, resolve
 
