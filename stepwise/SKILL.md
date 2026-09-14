@@ -1,6 +1,6 @@
 ---
 name: stepwise
-description: Implement a plan one commit at a time: propose each step, build it, hand over a digest instead of a diff, commit on the user's go.
+description: "Implement a plan one commit at a time: propose each step, build it, hand over a digest instead of a diff, commit on the user's go."
 disable-model-invocation: true
 ---
 
