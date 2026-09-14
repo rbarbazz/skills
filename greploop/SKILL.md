@@ -1,95 +1,66 @@
 ---
 name: greploop
-description: Iterate a draft PR through Greptile reviews until 5/5 confidence — recommend a fix for every finding, apply only what the user approves, push, re-review.
+description: Iterate the current branch through Greptile CLI reviews until 5/5 — recommend a fix for every finding, apply only what the user approves, commit, re-review. Runs before a PR exists or while it is a draft.
 disable-model-invocation: true
 ---
 
 # Greploop
 
-Drive a draft PR to a 5/5 Greptile confidence score with zero unresolved Greptile threads, before human review is requested.
+Drive the current branch to a 5/5 Greptile confidence score with no open findings, before human review is requested. The review runs locally through `greptile review`: nothing is posted to GitHub and nothing is pushed. The user pushes.
 
-Invoking this skill is explicit authorization to push commits to this PR's branch and to post the comments the loop needs: `@greptileai review` triggers and thread replies, plus deleting the loop's own trigger comments during final cleanup. The authorization is scoped to this PR. Regular pushes only, never force-push. No comments or messages anywhere else.
-
-Always show the user any comment or reply text before you post it, and post only after they approve the wording.
+Every code change goes through the user: recommend, then apply only what they approve.
 
 ## Setup
 
-1. Resolve the PR: use the argument (number or URL), otherwise the PR for the current branch (`gh pr view --json number,url,isDraft,headRefName`).
-2. Confirm it is a draft. If it is not a draft, stop and ask the user whether to continue: a non-draft PR may already have human reviewers watching.
-3. Confirm the local checkout is on the PR head branch with a clean working tree, and pull if behind. A dirty tree or wrong branch stops the loop before it starts.
+1. `greptile whoami` must print a signed-in account. It exits 0 even when signed out, so read the text. If signed out, stop and ask the user to run `greptile login` (interactive browser flow).
+2. Clean working tree on the branch to review (`git status --porcelain` empty). `greptile review` reads committed changes only, and the loop commits once per iteration. A dirty tree stops the loop: the user commits or stashes, not you.
+3. Base branch: the PR's base when a PR exists (`gh pr view --json isDraft,baseRefName`), otherwise the argument, otherwise the CLI default. If a PR exists and is not a draft, stop and ask whether to continue: human reviewers may be watching.
 
 ## The loop
 
 Repeat until an exit condition, at most 5 iterations.
 
-### 1. Get a review of the current head
+### 1. Review
 
-- Check for a Greptile review or comment on the current head commit (PR reviews and issue comments authored by the Greptile bot, newer than the head commit's push).
-- If none exists, post a PR comment containing exactly `@greptileai review`.
-- Poll every 30 seconds, up to 10 minutes. On timeout, stop and report.
+```bash
+greptile review --json > review.json
+```
+
+Add `-b BASE` when setup resolved a base. A review takes about a minute; wait for it, and never start a second one while one runs. Exit 0 with findings is the normal case.
+
+On a non-zero exit the review often finished server-side. Recover before giving up: `greptile review status --json` (exit 3 means still running, wait 30 s and retry), then `greptile review show RUN_ID --json > review.json` with the `runId` from status. If recovery fails, quote stderr and stop.
 
 ### 2. Read the results
 
-- Confidence score: match `([0-5])/5` in the newest Greptile review or summary comment. If no score is found, show the user the comment and ask how to read it.
-- Findings: every unresolved review thread authored by Greptile (GraphQL `reviewThreads`, `isResolved: false`).
+From `review.json`: `confidence` (1..5 or null), `confidenceReasoning`, and `comments[]`. Each comment carries `path`, `startLine`, `endLine`, `side` (`"old"` anchors to the pre-change file), `severity` (P0 worst, then P1, P2), `securityIssue`, `body`, and `suggestion` (replacement code for `startLine..endLine`, a proposal to check against the file, never a patch to apply blind).
+
+Two findings are the same finding when they share `path`, overlap in lines after your edits, and describe the same issue. A finding the user declined earlier this run stays declined: record it, do not ask again.
 
 ### 3. Exit check
 
-Close the loop when either condition holds. Greptile resolves threads itself on re-review once a bug is fixed, so an unresolved thread that is neither fixed nor declined means more work remains.
+- **Clean pass**: `confidence` is 5 and every finding is fixed or declined.
+- **Accepted below 5/5**: every finding is fixed or declined, and the user confirms they accept the current score. Ask, do not assume. When `confidence` is 3 or lower with nothing left to fix, read `confidenceReasoning` first: a concrete failure it describes that no comment raised is a finding, triage it.
 
-- **Clean pass** — score is 5/5 and every Greptile thread is resolved.
-- **Accepted below 5/5** — every open Greptile comment has been responded to (fixed, or declined with a reply), and the user has intentionally accepted the current sub-5/5 score. Confirm this with the user before stopping, do not assume it.
+Re-reviewing an unchanged commit returns no new information, so a review with nothing left to fix ends the loop without a confirmation review.
 
-On either exit, clean up, write the report, and stop.
+On either exit: description pass, report, stop.
 
-Cleanup on success: list this PR's issue comments whose body is `@greptileai review`, and delete all but the newest, so the PR keeps a single trigger comment. Delete only these exact trigger comments, nothing else.
-
-Description pass on success: read the current PR description and compare it against the branch's full diff, which now includes every fix the loop made. Draft a revised description in the repo's PR style that covers what changed during the loop. Show the user the current and proposed descriptions and ask for confirmation (AskUserQuestion). Apply only what the user approves, via `gh pr edit --body`; if they decline, leave the description untouched.
+Description pass, only when a PR exists: compare the PR description against the branch's full diff, which now includes the loop's fixes. Draft a revised description in the repo's PR style. Show current and proposed (AskUserQuestion) and apply only on approval, via `gh pr edit --body`.
 
 ### 4. Triage every finding
 
-Every code change goes through the user: read each unresolved Greptile comment, form a recommendation, and leave the code untouched until the user approves.
+Take open findings in order: `securityIssue`, then P0, P1, P2. For each, read the file around `startLine..endLine` (the file is ground truth, `hunk.before` is a snippet), work out the fix options, and pick the one you would apply. A finding you believe is wrong still goes to the user, with "leave as is" recommended and your evidence in one line.
 
-For each comment, work out the fix options you see and pick the one you would apply. Then present all findings to the user in one batch (AskUserQuestion, one entry per item: the comment and file:line, then the fix options). Put your pick first, labeled `(Recommended)`, and always include a "leave as is" option. Apply exactly the fixes the user chooses. For a declined item (the user picks "leave as is" or gives their own answer), reply on the thread with the user's one-line reasoning.
+Present all findings in one batch (AskUserQuestion, one entry per finding: the body and file:line, then the options). Your pick first, labeled `(Recommended)`, and always a "leave as is" option. Apply exactly the fixes the user chooses, and record each declined finding with the user's one-line reason.
 
-Triage is complete only when every unresolved Greptile comment has been approved-and-fixed or declined by the user.
+Triage is complete only when every open finding is approved-and-fixed or declined.
 
-### 5. Verify, push, resolve
+### 5. Verify and commit
 
-1. Run the repo's checks on the touched files (lint plus the relevant tests). Fix failures before pushing.
-2. Commit in the repo's commit style. One commit per iteration is fine.
-3. Push. If this PR is part of a gh-stack (its branch belongs to a stack), invoke the `gh-stack` skill to rebase the stack and push, so the branches above it pick up the new commit. Otherwise push the PR branch directly.
-4. Return to step 1. Leave thread resolution to Greptile: it resolves a thread on re-review once the bug is fixed.
+1. Run the repo's checks on the touched files (lint plus the relevant tests). Fix failures before committing.
+2. Stage only the files you edited, by path (`git add -- PATH...`), and commit in the repo's commit style. One commit per iteration is fine.
+3. Return to step 1. No push.
 
 ## Report
 
-End every run (success, timeout, or iteration cap) with: iterations run, final confidence score, counts of findings fixed / declined / remaining, which exit condition fired, and on success whether the PR description was updated.
-
-## Command reference
-
-Unresolved review threads with authors:
-
-```bash
-gh api graphql -f query='
-  query($owner:String!,$repo:String!,$pr:Int!){
-    repository(owner:$owner,name:$repo){
-      pullRequest(number:$pr){
-        reviewThreads(first:100){
-          nodes{ id isResolved comments(first:10){
-            nodes{ author{login} body path line url } } }
-        }
-      }
-    }
-  }' -f owner=OWNER -f repo=REPO -F pr=NUMBER
-```
-
-List and delete trigger comments (cleanup):
-
-```bash
-gh api "repos/OWNER/REPO/issues/NUMBER/comments" --paginate \
-  --jq '.[] | select(.body == "@greptileai review") | {id, created_at}'
-```
-
-```bash
-gh api -X DELETE "repos/OWNER/REPO/issues/comments/COMMENT_ID"
-```
+End every run (success, review failure, or iteration cap) with: iterations run, final confidence score, counts of findings fixed / declined / remaining, which exit condition fired, each declined finding with the user's reason, and whether the PR description was updated.
