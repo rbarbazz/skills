@@ -50,7 +50,7 @@ Description pass on success: read the current PR description and compare it agai
 
 Every code change goes through the user: read each unresolved Greptile comment, form a recommendation, and leave the code untouched until the user approves.
 
-For each comment, work out the fix options you see and pick the one you would apply. Then present all findings to the user in one batch (AskUserQuestion, one entry per item: the comment and file:line, then the fix options). Put your pick first, labeled `(Recommended)`, and always include a "leave as is" option. Apply exactly the fixes the user chooses. For a declined item (the user picks "leave as is" or gives their own answer), reply on the thread with the user's one-line reasoning.
+Walk the findings one at a time, file order. For each: quote the comment with its file:line and the relevant hunk, work out the fix options you see, and ask (AskUserQuestion, one finding per question). Put your pick first, labeled `(Recommended)`, and always include a "leave as is" option. On an approved fix, apply it before moving to the next finding, so the user sees each change land. On a declined item (the user picks "leave as is" or gives their own answer), reply on the thread with the user's one-line reasoning. Wait for the answer before presenting the next finding.
 
 Triage is complete only when every unresolved Greptile comment has been approved-and-fixed or declined by the user.
 
