@@ -15,6 +15,8 @@ done
 
 `-sfn` replaces any existing symlink of the same name, so this is safe to re-run after adding a skill.
 
+Steps shared by `babysit-pr` and `greploop` (PR target, review threads, one-finding-per-question triage, verify and commit) live in `pr-loop.md` at the repo root. Each of those skill dirs holds a `pr-loop.md` symlink to it, so the skill reads the file from its own directory.
+
 ## Workflow: from ticket to PR
 
 How the skills chain on a ticket. The split is by how well I understand the ticket, not by its size.

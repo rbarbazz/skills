@@ -12,11 +12,12 @@ Invoking this skill is explicit authorization to push commits to this PR's branc
 
 Always show the user any comment or reply text before you post it, and post only after they approve the wording.
 
+Shared steps (Target, Threads, Triage, Verify and commit) live in [pr-loop.md](pr-loop.md). Read it first.
+
 ## Setup
 
-1. Resolve the PR: use the argument (number or URL), otherwise the PR for the current branch (`gh pr view --json number,url,isDraft,headRefName`).
+1. Target, per pr-loop.md.
 2. Confirm it is a draft. If it is not a draft, stop and ask the user whether to continue: a non-draft PR may already have human reviewers watching.
-3. Confirm the local checkout is on the PR head branch with a clean working tree, and pull if behind. A dirty tree or wrong branch stops the loop before it starts.
 
 ## The loop
 
@@ -31,7 +32,7 @@ Repeat until an exit condition, at most 5 iterations.
 ### 2. Read the results
 
 - Confidence score: match `([0-5])/5` in the newest Greptile review or summary comment. If no score is found, show the user the comment and ask how to read it.
-- Findings: every unresolved review thread authored by Greptile (GraphQL `reviewThreads`, `isResolved: false`).
+- Findings: Threads, per pr-loop.md, keeping the unresolved threads authored by the Greptile bot.
 
 ### 3. Exit check
 
@@ -48,40 +49,19 @@ Description pass on success: read the current PR description and compare it agai
 
 ### 4. Triage every finding
 
-Every code change goes through the user: read each unresolved Greptile comment, form a recommendation, and leave the code untouched until the user approves.
-
-Walk the findings one at a time, file order. For each: quote the comment with its file:line and the relevant hunk, work out the fix options you see, and ask (AskUserQuestion, one finding per question). Put your pick first, labeled `(Recommended)`, and always include a "leave as is" option. On an approved fix, apply it before moving to the next finding, so the user sees each change land. On a declined item (the user picks "leave as is" or gives their own answer), reply on the thread with the user's one-line reasoning. Wait for the answer before presenting the next finding.
-
-Triage is complete only when every unresolved Greptile comment has been approved-and-fixed or declined by the user.
+Triage, per pr-loop.md, over the Greptile findings. On a declined finding (the user picks "leave as is" or gives their own answer), reply on the thread with the user's one-line reasoning.
 
 ### 5. Verify, push, resolve
 
-1. Run the repo's checks on the touched files (lint plus the relevant tests). Fix failures before pushing.
-2. Commit in the repo's commit style. One commit per iteration is fine.
-3. Push. If this PR is part of a gh-stack (its branch belongs to a stack), invoke the `gh-stack` skill to rebase the stack and push, so the branches above it pick up the new commit. Otherwise push the PR branch directly.
-4. Return to step 1. Leave thread resolution to Greptile: it resolves a thread on re-review once the bug is fixed.
+1. Verify and commit, per pr-loop.md.
+2. Push. If this PR is part of a gh-stack (its branch belongs to a stack), invoke the `gh-stack` skill to rebase the stack and push, so the branches above it pick up the new commit. Otherwise push the PR branch directly.
+3. Return to step 1. Leave thread resolution to Greptile: it resolves a thread on re-review once the bug is fixed.
 
 ## Report
 
 End every run (success, timeout, or iteration cap) with: iterations run, final confidence score, counts of findings fixed / declined / remaining, which exit condition fired, and on success whether the PR description was updated.
 
 ## Command reference
-
-Unresolved review threads with authors:
-
-```bash
-gh api graphql -f query='
-  query($owner:String!,$repo:String!,$pr:Int!){
-    repository(owner:$owner,name:$repo){
-      pullRequest(number:$pr){
-        reviewThreads(first:100){
-          nodes{ id isResolved comments(first:10){
-            nodes{ author{login} body path line url } } }
-        }
-      }
-    }
-  }' -f owner=OWNER -f repo=REPO -F pr=NUMBER
-```
 
 List and delete trigger comments (cleanup):
 
