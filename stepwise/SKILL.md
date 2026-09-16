@@ -10,7 +10,7 @@ Implement a ticket, spec, or plan as a sequence of small commits, the user steer
 
 ## Input
 
-The work is the argument: a ticket in full form (`owner/repo#42` or the URL), a spec or plan file path, or the plan already in the conversation. With none, ask for one. Read the work and every file it names before slicing.
+The work is the argument: a Linear ticket (`IPOD-123`), a spec or plan file path, or the plan already in the conversation. With none, ask for one. Read the work and every file it names before slicing.
 
 ## 1. Slice
 
@@ -76,6 +76,6 @@ Stage only the files this step touched, by path (`git add -- PATH...`), and comm
 
 ## 3. Close
 
-After the last commit, run the full test suite once. Then read the ticket (or the spec or plan when there is none) and map every requirement to a commit. A requirement with no commit is a **gap**.
+After the last commit, run every test file that exercises code the run changed. Then read the ticket (or the spec or plan when there is none) and map every requirement to a commit. A requirement with no commit is a **gap**.
 
 Then report: the list of commits (`git log --oneline` for the run), the gaps and the parking lot with a one-line recommendation per item (a follow-up step now, a ticket, or drop), and the run's base commit (the parent of the first commit), as the fixed point for `mattpocock-skills:code-review` in a fresh session. Stop.

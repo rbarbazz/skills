@@ -19,16 +19,13 @@ Steps shared by `babysit-pr` and `greploop` (PR target, review threads, one-find
 
 ## Workflow: from ticket to PR
 
-How the skills chain on a ticket. The split is by how well I understand the ticket, not by its size.
+Always the same chain, one ticket per `stepwise` session:
 
-- **Straightforward ticket** (dependency bump, rename, a change the ticket already spells out): `stepwise` on the ticket. Its slicing list is the plan.
-- **Unclear or complex ticket**:
-  1. Read the ticket and restate the scope in my own words, so the understanding is mine before any plan exists.
-  2. Grooming session (`mattpocock-skills:grilling`) until scope and approach are settled. Edit the ticket as answers land: the ticket is the spec.
-  3. Plan mode, then clear.
-  4. `stepwise` on the plan: one commit at a time, each step approved before it is built and handed over as a digest instead of a diff. Its close maps every ticket requirement to a commit and lists the gaps.
-- **After either**, in this order:
-  1. Clear, then `mattpocock-skills:code-review` against the base commit `stepwise` reported. A fresh session reviews without the assumptions that shaped the code. This replaces `mattpocock-skills:implement`, which runs the review inside the session that wrote the diff.
-  2. `greploop` to drive the branch to a clean Greptile review.
-- **Review of someone else's PR**: `pr-review`.
-- **PR waiting on CI or reviewers**: `babysit-pr`.
+1. `mattpocock-skills:grilling` until scope and approach are settled.
+2. `mattpocock-skills:to-spec`, when the grilling produced more than one ticket holds (optional).
+3. `mattpocock-skills:to-tickets`.
+4. `stepwise` on a ticket: one commit at a time, each step approved before it is built and handed over as a digest instead of a diff. Its close maps every ticket requirement to a commit and lists the gaps.
+5. Clear, then `mattpocock-skills:code-review` against the base commit `stepwise` reported. A fresh session reviews without the assumptions that shaped the code.
+6. `greploop` to drive the branch to a clean Greptile review.
+
+Outside the chain: `pr-review` for someone else's PR, `babysit-pr` for a PR waiting on CI or reviewers.
