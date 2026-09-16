@@ -1,22 +1,24 @@
 ---
 name: stepwise
-description: "Implement a ticket, spec, or plan one commit at a time: propose each step, build it, hand over a digest instead of a diff, commit on the user's go."
+description: "Implement a ticket, spec, or plan one commit at a time as a walkthrough: announce each step, build it, hand over a digest instead of a diff, so the user understands the final diff without re-reading it."
 disable-model-invocation: true
 ---
 
 # Stepwise
 
-Implement a ticket, spec, or plan as a sequence of small commits, the user steering between each one. The user outsources the typing and keeps the decisions: every step is approved before it is built and every commit before it lands. Each hand-over is a **digest**, so the user reads a few targeted hunks and asks questions instead of re-reading a whole diff.
+Implement a ticket, spec, or plan as a sequence of small commits, and walk the user through each one as it lands. The goal of the run is the user's understanding: by the last commit the user knows what the diff does and why, and reads the final diff to confirm rather than to discover. Every step is announced before it is built and handed over as a **digest**, a few targeted hunks with the reasoning around them, instead of a diff.
 
 ## Input
 
 The work is the argument: a Linear ticket (`IPOD-123`), a spec or plan file path, or the plan already in the conversation. With none, ask for one. Read the work and every file it names before slicing.
 
+Then ask for the user's **map** of the area, unless the invocation gives it: which modules, libraries, and patterns the work touches that they know well, and which are new to them. The map decides what each digest explains and what it leaves as a name: known ground gets the name, new ground gets a one-line aside.
+
 ## 1. Slice
 
-Cut the work into **steps**. A step is one commit: the tree works after it, its tests pass, and it reads on its own. Order steps the way `~/.claude/docs/git-and-prs.md` orders commits. Aim for steps under about 150 changed lines: a step that would grow past that is two steps.
+Cut the work into **steps**. A step is one idea the user can hold in their head, landed as one commit: the tree works after it, its tests pass, and it reads on its own. Two hundred generated lines of migration is one idea; forty lines that touch three concepts is three steps. Order steps the way `~/.claude/docs/git-and-prs.md` orders commits.
 
-Present the slicing as a numbered list headed by the ticket or spec title, one line per step: what it changes and the files it touches. Then stop and wait. The user merges, splits, reorders, or drops steps in chat. Slicing is complete when the user says go on the list.
+Present the slicing as a numbered list headed by the ticket or spec title, one line per step: what it changes and the files it touches. Name the concepts the run introduces (the domain nouns and the pieces being built) in this list, and use the same names in every proposal and digest after: the user's mental model builds on stable names. Then stop and wait. The user merges, splits, reorders, or drops steps in chat. Slicing is complete when the user says go on the list.
 
 The list stays live: when a step teaches something that changes the later steps, re-present the remaining list and wait for go again.
 
@@ -24,7 +26,7 @@ The list stays live: when a step teaches something that changes the later steps,
 
 ### a. Propose
 
-Before any edit, five lines at most:
+Before any edit, five lines at most, so the user knows what is coming before the diff exists:
 
 - **Goal**: what works after this step that does not work now.
 - **Approach**: how, in one sentence.
@@ -32,7 +34,7 @@ Before any edit, five lines at most:
 - **Files**: the files to touch.
 - **Proof**: the test or command that shows the step works, and the seam it tests at.
 
-Ask with AskUserQuestion: `Go (Recommended)`, `Change the approach`, `Skip this step`. On "change", take the user's direction and propose again. Building starts only on Go.
+Ask with AskUserQuestion: `Clear, build it (Recommended)`, `Explain something first`, `Change the approach`. On "explain", answer from the code and the plan, then ask again. On "change", take the user's direction and propose again. Building starts on "Clear, build it".
 
 ### b. Build
 
@@ -42,7 +44,7 @@ Build is complete when lint, typecheck, and the step's tests pass and the diff t
 
 ### c. Hand over
 
-Send the digest, on this template, in the user's reply style:
+Send the digest, on this template:
 
 ```markdown
 ## Step <n>/<total>: <title>
@@ -60,15 +62,15 @@ Send the digest, on this template, in the user's reply style:
 - <where confidence is low, and what would confirm it>. Or: none.
 
 **Worth reading**
-- `<path>:<line>`: <why this hunk deserves eyes, one line>
+- `<path>:<line>`: <what this hunk shows that the rest of the digest cannot, one line>
 
-**Checks**: <lint and tests run, and the result>
+**Checks**: <lint, typecheck, and tests run, and the result>
 **Parking lot**: <items added this step>. Or: none.
 ```
 
-"Worth reading" is the whole reading list, one to three hunks: the core logic, and anything under Decisions or Hesitations. The user opens the rest of the diff when they want it.
+"Worth reading" is the whole reading list, one to three hunks: what the user must see to understand the commit, chosen with the map (the core logic, anything on new ground, anything under Decisions or Hesitations). The user opens the rest of the diff when they want it.
 
-Then wait. The user asks questions, requests changes, or says commit. Answer questions from the code, with `file:line`. Apply requested changes, re-run the checks, and send a short delta (what changed since the last digest) instead of a full digest. Hand-over is complete when the user says commit.
+Then wait. The user asks questions, requests changes, or says commit. Answer questions from the code, with `file:line`. A question marks a spot the digest missed: cover that kind of point up front in the digests that follow. Apply requested changes, re-run the checks, and send a short delta (what changed since the last digest) instead of a full digest. Hand-over is complete when the user says commit.
 
 ### d. Commit
 
@@ -78,4 +80,11 @@ Stage only the files this step touched, by path (`git add -- PATH...`), and comm
 
 After the last commit, run every test file that exercises code the run changed. Then read the ticket (or the spec or plan when there is none) and map every requirement to a commit. A requirement with no commit is a **gap**.
 
-Then report: the list of commits (`git log --oneline` for the run), the gaps and the parking lot with a one-line recommendation per item (a follow-up step now, a ticket, or drop), and the run's base commit (the parent of the first commit), as the fixed point for `mattpocock-skills:code-review` in a fresh session. Stop.
+Then report:
+
+- the list of commits (`git log --oneline` for the run);
+- a **reading order** for the final diff: which commit to read first and which file to open in each, three lines at most;
+- the gaps and the parking lot, with a one-line recommendation per item (a follow-up step now, a ticket, or drop);
+- the run's base commit (the parent of the first commit), as the fixed point for `mattpocock-skills:code-review` in a fresh session.
+
+Stop.
