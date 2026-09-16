@@ -1,22 +1,22 @@
 ---
 name: stepwise
-description: "Implement a plan one commit at a time: propose each step, build it, hand over a digest instead of a diff, commit on the user's go."
+description: "Implement a ticket, spec, or plan one commit at a time: propose each step, build it, hand over a digest instead of a diff, commit on the user's go."
 disable-model-invocation: true
 ---
 
 # Stepwise
 
-Implement a plan as a sequence of small commits, the user steering between each one. The user outsources the typing and keeps the decisions: every step is approved before it is built and every commit before it lands. Each hand-over is a **digest**, so the user reads a few targeted hunks and asks questions instead of re-reading a whole diff.
+Implement a ticket, spec, or plan as a sequence of small commits, the user steering between each one. The user outsources the typing and keeps the decisions: every step is approved before it is built and every commit before it lands. Each hand-over is a **digest**, so the user reads a few targeted hunks and asks questions instead of re-reading a whole diff.
 
 ## Input
 
-The plan is the argument (a file path), else the plan already in the conversation, else ask for one. Read the plan and every file it names before slicing.
+The work is the argument: a ticket in full form (`owner/repo#42` or the URL), a spec or plan file path, or the plan already in the conversation. With none, ask for one. Read the work and every file it names before slicing.
 
 ## 1. Slice
 
-Cut the plan into **steps**. A step is one commit: the tree works after it, its tests pass, and it reads on its own. Order steps the way `~/.claude/docs/git-and-prs.md` orders commits. Aim for steps under about 150 changed lines: a step that would grow past that is two steps.
+Cut the work into **steps**. A step is one commit: the tree works after it, its tests pass, and it reads on its own. Order steps the way `~/.claude/docs/git-and-prs.md` orders commits. Aim for steps under about 150 changed lines: a step that would grow past that is two steps.
 
-Present the slicing as a numbered list, one line per step: what it changes and the files it touches. Then stop and wait. The user merges, splits, reorders, or drops steps in chat. Slicing is complete when the user says go on the list.
+Present the slicing as a numbered list headed by the ticket or spec title, one line per step: what it changes and the files it touches. Then stop and wait. The user merges, splits, reorders, or drops steps in chat. Slicing is complete when the user says go on the list.
 
 The list stays live: when a step teaches something that changes the later steps, re-present the remaining list and wait for go again.
 
@@ -38,7 +38,7 @@ Ask with AskUserQuestion: `Go (Recommended)`, `Change the approach`, `Skip this 
 
 Implement the step as proposed, running the `mattpocock-skills:tdd` loop at the seam named under Proof. Anything discovered outside the step (a bug nearby, a refactor that begs, a missing test elsewhere) goes on the **parking lot**, a list carried through the run, and the step stays on its goal.
 
-Build is complete when lint and the step's tests pass and the diff touches only the files named under Files. A file the step turns out to need goes into the digest's Decisions, with why.
+Build is complete when lint, typecheck, and the step's tests pass and the diff touches only the files named under Files. A file the step turns out to need goes into the digest's Decisions, with why.
 
 ### c. Hand over
 
@@ -76,6 +76,6 @@ Stage only the files this step touched, by path (`git add -- PATH...`), and comm
 
 ## 3. Close
 
-After the last commit, read the ticket (or the plan when there is none) and map every requirement to a commit. A requirement with no commit is a **gap**.
+After the last commit, run the full test suite once. Then read the ticket (or the spec or plan when there is none) and map every requirement to a commit. A requirement with no commit is a **gap**.
 
-Then report: the list of commits (`git log --oneline` for the run), the gaps and the parking lot with a one-line recommendation per item (a follow-up step now, a ticket, or drop), and a pointer to `greploop` for the review pass. Stop.
+Then report: the list of commits (`git log --oneline` for the run), the gaps and the parking lot with a one-line recommendation per item (a follow-up step now, a ticket, or drop), and the run's base commit (the parent of the first commit), as the fixed point for `mattpocock-skills:code-review` in a fresh session. Stop.
