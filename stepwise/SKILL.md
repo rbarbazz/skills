@@ -1,23 +1,24 @@
 ---
 name: stepwise
-description: "Implement a ticket, spec, or plan one commit at a time as a walkthrough: announce each step, build it, hand over a digest instead of a diff, so the user understands the final diff without re-reading it."
+description: "Implement a ticket, spec, or plan one commit at a time: propose each step, build it, hand over a digest."
 disable-model-invocation: true
 ---
 
 # Stepwise
 
-Implement a ticket, spec, or plan as a sequence of small commits, and walk the user through each one as it lands. The goal of the run is the user's understanding: by the last commit the user knows what the diff does and why, and reads the final diff to confirm rather than to discover. Every step is announced before it is built and handed over as a **digest**, a few targeted hunks with the reasoning around them, instead of a diff.
+Implement a ticket, spec, or plan as a sequence of small commits, and walk the user through each one as it lands. The goal of the run is the user's understanding: by the last commit the user knows what the diff does and why, and reads the final diff to confirm rather than to discover. Every step is proposed before it is built and handed over as a **digest**.
 
 ## Input
 
 The work is the argument: a Linear ticket (`IPOD-123`), a spec or plan file path, or the plan already in the conversation. With none, ask for one. Read the work and every file it names before slicing.
+
 ## 1. Slice
 
-Cut the work into **steps**. A step is one idea the user can hold in their head, landed as one commit: the tree works after it, its tests pass, and it reads on its own. Two hundred generated lines of migration is one idea; forty lines that touch three concepts is three steps. Order steps the way `~/.claude/docs/git-and-prs.md` orders commits.
+Cut the work into **steps**. A step is one idea the user can hold in their head, landed as one **green** commit: lint, typecheck, and tests pass, and the commit reads on its own. Two hundred generated lines of migration is one idea; forty lines that touch three concepts is three steps. Order steps the way `~/.claude/docs/git-and-prs.md` orders commits.
 
-Present the slicing as a numbered list headed by the ticket or spec title, one line per step: what it changes and the files it touches. Name the concepts the run introduces (the domain nouns and the pieces being built) in this list, and use the same names in every proposal and digest after: the user's mental model builds on stable names. Then stop and wait. The user merges, splits, reorders, or drops steps in chat. Slicing is complete when the user says go on the list.
+Present the slicing as a numbered list headed by the ticket or spec title, one line per step: what it changes and the files it touches. Name the concepts the run introduces (the domain nouns and the pieces being built) in this list, and use the same names in every proposal and digest after: the user's mental model builds on stable names. Ask with AskUserQuestion: `Go (Recommended)`, `Change the list`. On "change", take the user's merges, splits, reorders, or drops, re-present the list, and ask again. Slicing is complete on "Go".
 
-The list stays live: when a step teaches something that changes the later steps, re-present the remaining list and wait for go again.
+The list stays live: when a step teaches something that changes the later steps, re-present the remaining list and ask again.
 
 ## 2. Loop over steps
 
@@ -37,11 +38,11 @@ Ask with AskUserQuestion: `Clear, build it (Recommended)`, `Explain something fi
 
 Implement the step as proposed, running the `mattpocock-skills:tdd` loop at the seam named under Proof. Anything discovered outside the step (a bug nearby, a refactor that begs, a missing test elsewhere) goes on the **parking lot**, a list carried through the run, and the step stays on its goal.
 
-Build is complete when lint, typecheck, and the step's tests pass and the diff touches only the files named under Files. A file the step turns out to need goes into the digest's Decisions, with why.
+Build is complete when the step is green and the diff touches only the files named under Files. A file the step turns out to need goes into the digest's Decisions, with why. A step that cannot go green as proposed, or whose approach breaks mid-build, goes back to 2a with what was learned, with nothing committed.
 
 ### c. Hand over
 
-Send the digest, on this template:
+The digest is a few targeted hunks with the reasoning around them: what the user must see to understand the commit. Send it on this template:
 
 ```markdown
 ## Step <n>/<total>: <title>
@@ -65,9 +66,9 @@ Send the digest, on this template:
 **Parking lot**: <items added this step>. Or: none.
 ```
 
-"Worth reading" is the whole reading list, one to three hunks: what the user must see to understand the commit (the core logic, and anything under Decisions or Hesitations). The user opens the rest of the diff when they want it.
+"Worth reading" is the whole reading list, one to three hunks: the core logic, and anything under Decisions or Hesitations. The user opens the rest of the diff when they want it.
 
-Then wait. The user asks questions, requests changes, or says commit. Answer questions from the code, with `file:line`. A question marks a spot the digest missed: cover that kind of point up front in the digests that follow. Apply requested changes, re-run the checks, and send a short delta (what changed since the last digest) instead of a full digest. Hand-over is complete when the user says commit.
+Then wait. The user asks questions, requests changes, or says commit. Answer questions from the code, with `file:line`. Each question is a **lesson**: the digests that follow cover that kind of point up front. Apply requested changes, re-run the checks, and send a short delta: what changed since the last digest. Hand-over is complete when the user says commit.
 
 ### d. Commit
 
