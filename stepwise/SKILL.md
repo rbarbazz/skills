@@ -11,9 +11,6 @@ Implement a ticket, spec, or plan as a sequence of small commits, and walk the u
 ## Input
 
 The work is the argument: a Linear ticket (`IPOD-123`), a spec or plan file path, or the plan already in the conversation. With none, ask for one. Read the work and every file it names before slicing.
-
-Then ask for the user's **map** of the area, unless the invocation gives it: which modules, libraries, and patterns the work touches that they know well, and which are new to them. The map decides what each digest explains and what it leaves as a name: known ground gets the name, new ground gets a one-line aside.
-
 ## 1. Slice
 
 Cut the work into **steps**. A step is one idea the user can hold in their head, landed as one commit: the tree works after it, its tests pass, and it reads on its own. Two hundred generated lines of migration is one idea; forty lines that touch three concepts is three steps. Order steps the way `~/.claude/docs/git-and-prs.md` orders commits.
@@ -68,7 +65,7 @@ Send the digest, on this template:
 **Parking lot**: <items added this step>. Or: none.
 ```
 
-"Worth reading" is the whole reading list, one to three hunks: what the user must see to understand the commit, chosen with the map (the core logic, anything on new ground, anything under Decisions or Hesitations). The user opens the rest of the diff when they want it.
+"Worth reading" is the whole reading list, one to three hunks: what the user must see to understand the commit (the core logic, and anything under Decisions or Hesitations). The user opens the rest of the diff when they want it.
 
 Then wait. The user asks questions, requests changes, or says commit. Answer questions from the code, with `file:line`. A question marks a spot the digest missed: cover that kind of point up front in the digests that follow. Apply requested changes, re-run the checks, and send a short delta (what changed since the last digest) instead of a full digest. Hand-over is complete when the user says commit.
 
