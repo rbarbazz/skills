@@ -8,9 +8,9 @@ disable-model-invocation: true
 
 Drive a draft PR to a 5/5 Greptile confidence score with zero unresolved Greptile threads, before human review is requested.
 
-Invoking this skill is explicit authorization to push commits to this PR's branch and to post the comments the loop needs: `@greptileai review` triggers and thread replies, plus deleting the loop's own trigger comments during final cleanup. The authorization is scoped to this PR. Regular pushes only, never force-push. No comments or messages anywhere else.
+Invoking this skill is explicit authorization to push commits to this PR's branch, to trigger Greptile reviews through the Greptile MCP (each one spends review credits), and to post the thread replies the loop needs. The authorization is scoped to this PR. Regular pushes only, never force-push. No comments or messages anywhere else.
 
-Always show the user any comment or reply text before you post it, and post only after they approve the wording.
+Always show the user any reply text before you post it, and post only after they approve the wording.
 
 Shared steps (Target, Threads, Triage, Verify and commit) live in [pr-loop.md](pr-loop.md). Read it first.
 
@@ -18,6 +18,7 @@ Shared steps (Target, Threads, Triage, Verify and commit) live in [pr-loop.md](p
 
 1. Target, per pr-loop.md.
 2. Confirm it is a draft. If it is not a draft, stop and ask the user whether to continue: a non-draft PR may already have human reviewers watching.
+3. Repository tuple for the Greptile MCP: `name` (owner/repo), `remote` (`github`), `defaultBranch`. Read them with `gh repo view --json nameWithOwner,defaultBranchRef`. Every Greptile MCP call below takes this tuple plus the PR number.
 
 ## The loop
 
@@ -25,14 +26,14 @@ Repeat until an exit condition, at most 5 iterations.
 
 ### 1. Get a review of the current head
 
-- Check for a Greptile review or comment on the current head commit (PR reviews and issue comments authored by the Greptile bot, newer than the head commit's push).
-- If none exists, post a PR comment containing exactly `@greptileai review`.
-- Poll every 30 seconds, up to 10 minutes. On timeout, stop and report.
+- `list_code_reviews` filtered by `prNumber`. The review of the current head is the run whose `commitSha` equals the head commit.
+- If that run is `COMPLETED`, move on. If it is `PENDING`, `REVIEWING_FILES`, or `GENERATING_SUMMARY`, wait for it. If there is no run for the head, `trigger_code_review`: a success response means the request is queued, not that the review is done.
+- Poll `list_code_reviews` every 30 seconds, up to 10 minutes. On timeout, or on a `FAILED` or `SKIPPED` run for the head, stop and report.
 
 ### 2. Read the results
 
-- Confidence score: match `([0-5])/5` in the newest Greptile review or summary comment. If no score is found, show the user the comment and ask how to read it.
-- Findings: Threads, per pr-loop.md, keeping the unresolved threads authored by the Greptile bot.
+- Confidence score: `get_code_review` with the run's id, then match `Confidence Score: ([0-5])/5` in `body`. If no score is found, show the user the body and ask how to read it.
+- Findings: Threads, per pr-loop.md, keeping the unresolved threads authored by the Greptile bot. Thread resolution lives only in GitHub. The MCP's `addressed` flag is Greptile's own bookkeeping and stays false on a declined finding, so it plays no part in the exit check.
 
 ### 3. Exit check
 
@@ -41,9 +42,7 @@ Close the loop when either condition holds. Greptile resolves threads itself on 
 - **Clean pass** — score is 5/5 and every Greptile thread is resolved.
 - **Accepted below 5/5** — every open Greptile comment has been responded to (fixed, or declined with a reply), and the user has intentionally accepted the current sub-5/5 score. Confirm this with the user before stopping, do not assume it.
 
-On either exit, clean up, write the report, and stop.
-
-Cleanup on success: list this PR's issue comments whose body is `@greptileai review`, and delete all but the newest, so the PR keeps a single trigger comment. Delete only these exact trigger comments, nothing else.
+On either exit, write the report and stop.
 
 Description pass on success: read the current PR description and compare it against the branch's full diff, which now includes every fix the loop made. Draft a revised description in the repo's PR style that covers what changed during the loop. Show the user the current and proposed descriptions and ask for confirmation (AskUserQuestion). Apply only what the user approves, via `gh pr edit --body`; if they decline, leave the description untouched.
 
@@ -60,16 +59,3 @@ Triage, per pr-loop.md, over the Greptile findings. On a declined finding (the u
 ## Report
 
 End every run (success, timeout, or iteration cap) with: iterations run, final confidence score, counts of findings fixed / declined / remaining, which exit condition fired, and on success whether the PR description was updated.
-
-## Command reference
-
-List and delete trigger comments (cleanup):
-
-```bash
-gh api "repos/OWNER/REPO/issues/NUMBER/comments" --paginate \
-  --jq '.[] | select(.body == "@greptileai review") | {id, created_at}'
-```
-
-```bash
-gh api -X DELETE "repos/OWNER/REPO/issues/comments/COMMENT_ID"
-```
