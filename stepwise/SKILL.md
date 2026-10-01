@@ -10,11 +10,11 @@ Implement a ticket, spec, or plan as a sequence of small commits, and walk the u
 
 ## Input
 
-The work is the argument: a Linear ticket (`IPOD-123`), a spec or plan file path, or the plan already in the conversation. With none, ask for one. Read the work and every file it names before slicing.
+The work is the argument: a Linear ticket (`ABC-123`), a spec or plan file path, or the plan already in the conversation. With none, ask for one. Read the work and every file it names before slicing.
 
 ## 1. Slice
 
-Cut the work into **steps**. A step is one idea the user can hold in their head, landed as one **green** commit: lint, typecheck, and tests pass, and the commit reads on its own. Two hundred generated lines of migration is one idea; forty lines that touch three concepts is three steps. Order steps the way `~/.claude/docs/git-and-prs.md` orders commits.
+Cut the work into **steps**. A step is one idea the user can hold in their head, landed as one **green** commit: lint, typecheck, and tests pass, and the commit reads on its own. Two hundred generated lines of migration is one idea; forty lines that touch three concepts is three steps. Order steps the way the `commit-and-pr` skill orders commits.
 
 Present the slicing as a numbered list headed by the ticket or spec title, one line per step: what it changes and the files it touches. Name the concepts the run introduces (the domain nouns and the pieces being built) in this list, and use the same names in every proposal and digest after: the user's mental model builds on stable names. Ask with AskUserQuestion: `Go (Recommended)`, `Change the list`. On "change", take the user's merges, splits, reorders, or drops, re-present the list, and ask again. Slicing is complete on "Go".
 
