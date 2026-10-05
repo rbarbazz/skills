@@ -1,6 +1,12 @@
 ---
 name: commit-and-pr
 description: Commit and PR conventions. Use before any git commit, splitting work into commits, addressing PR review feedback, gh pr create, or writing a PR description.
+metadata:
+  credits:
+    skill: pr
+    author: Matt Pocock
+    url: "https://github.com/mattpocock/skills/tree/main/skills/engineering/pr"
+    license: MIT
 ---
 
 # Commits
@@ -155,5 +161,3 @@ Screenshots when the change is visual. Otherwise a shell snippet
 (`./manage.py shell`, `rails console`), a command, or the exact test that
 failed before and passes now, with output. Proof lives here, not in
 committed scripts.
-
-Credits: Matt Pocock's [`pr`](https://github.com/mattpocock/skills/tree/main/skills/engineering/pr) (MIT), itself after Dex Horthy's `show-me`.
