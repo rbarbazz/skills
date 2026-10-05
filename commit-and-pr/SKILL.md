@@ -26,14 +26,6 @@ apply. Carry the ticket link and the links it contains.
 
 - **Before:** <screenshot/output/failing test run>
   **After:** <screenshot/output/passing test run>
-
-## Merge Danger
-
-**Door:** <one-way or two-way>
-
-**Blast Radius:** <one-word description>
-
-<optional: ramifications>
 ```
 
 Skip all preambles and keep prose brief. Use the product's domain language.
@@ -163,11 +155,5 @@ Screenshots when the change is visual. Otherwise a shell snippet
 (`./manage.py shell`, `rails console`), a command, or the exact test that
 failed before and passes now, with output. Proof lives here, not in
 committed scripts.
-
-## Merge Danger
-
-Two-way doors can be walked back, one-way doors (data migrations, dropped
-columns, public API changes) cannot. Blast radius: every surface that breaks
-if the PR misbehaves (consumers, layout, mobile, background jobs).
 
 Credits: Matt Pocock's [`pr`](https://github.com/mattpocock/skills/tree/main/skills/engineering/pr) (MIT), itself after Dex Horthy's `show-me`.
