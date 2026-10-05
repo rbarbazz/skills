@@ -24,16 +24,19 @@ description: Commit and PR conventions. Use before any git commit, splitting wor
   section, or whether it is relevant, ask me rather than guessing.
 - **Write the PR description as a short re-pitch for a teammate with zero
   conversation context.** It answers one question: what does this PR change,
-  and why? Open with the premise (the product problem and why the change
-  exists) in two or three sentences, then one bullet per change, one
-  sentence each. Same Simplified Technical English as CLAUDE.md, but define a
-  term only when a reviewer could actually misread it: skip the repo's
-  established domain nouns.
+  and why? Layout, section menu, and the visual formats live in
+  [pr-body.md](pr-body.md): read it before writing a PR body. Open the
+  Summary with the premise (the product problem and why the change exists)
+  in two or three sentences, then the smallest visual that makes the key
+  point clear, then one bullet per change, one sentence each. Same
+  Simplified Technical English as CLAUDE.md, but define a term only when a
+  reviewer could actually misread it: skip the repo's established domain
+  nouns.
   - **Description bullets stay at product altitude.** Each one says what a
     user or the system observably does differently after the change: the
-    what and the why. The how stays in the diff. Name a code symbol only when
-    the reader needs it to understand the behavior change, not to locate the
-    code.
+    what and the why. The how stays in the diff and in the Summary visual.
+    Name a code symbol only when the reader needs it to understand the
+    behavior change, not to locate the code.
     - ❌ "`JobLock.release`: a `finally` block now deletes the lock key."
     - ✅ "A job whose worker crashes now frees its lock within 30 seconds
       instead of 10 minutes."
@@ -45,18 +48,14 @@ description: Commit and PR conventions. Use before any git commit, splitting wor
     "(server-authoritative)" is session vocabulary: write the plain sentence
     it stands for.
   - **Scale to the change's size and risk**, not to the effort behind it: a
-    mechanical diff earns a few sentences. Default target: the whole
-    description fits on one screen without scrolling.
+    mechanical diff earns a few sentences and no visual. Default target: the
+    whole description fits on one screen without scrolling.
 - **Carry ticket context into the PR description**: a link to the ticket,
   and any links it contains such as the overarching tech spec.
 - **Every PR is reviewable by observation, not just by reading the diff.**
-  Each PR ships with its own tests, and the description ends with a way to
-  see the change working directly. The proof goes in the description, not in
-  committed scripts.
-  - **Backend**: a snippet to paste into the app's interactive shell (such as
-    `./manage.py shell` or `rails console`) with the expected output, or a
-    plain command (CLI task, curl, test invocation) with its expected output.
-  - **Frontend**: capture the affected screens as a before/after comparison.
+  Each PR ships with its own tests, and its Evidence section shows the change
+  working before and after, per pr-body.md. Its Merge Danger section names
+  the door (one-way or two-way) and the blast radius.
 - **Multi-part work is a GitHub native stack.** Keep each PR under 400
   changed lines: past that, split into another PR in the stack. Invoke
   the `pr-stacks` skill.
