@@ -24,8 +24,6 @@ apply. Carry the ticket link and the links it contains.
 
 <diagram, diff-sketch, or tree>
 
-- <one bullet per change: what a user or the system does differently>
-
 ## Evidence
 
 - **Before:** <screenshot/output/failing test run>
@@ -51,7 +49,9 @@ tree for a refactor, Mermaid for data flow, a `diff` of one of those when the
 shape already exists. Keep only the calls, files, and states needed to make
 the point. A mechanical diff gets no visual.
 
-Bullets stay at product altitude: the how lives in the diff.
+The prose stays at product altitude: the how lives in the visual and the
+diff. A change that shows in neither means the visual is the wrong one, not
+that a list is missing.
 
 - ❌ "`JobLock.release`: a `finally` block now deletes the lock key."
 - ✅ "A job whose worker crashes now frees its lock within 30 seconds."
