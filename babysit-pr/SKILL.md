@@ -39,7 +39,7 @@ Threads, per pr-loop.md. Top-level PR comments (bots often post here too, outsid
 gh api --method GET --paginate "repos/{owner}/{repo}/issues/<number>/comments?per_page=100"
 ```
 
-Filter comments by content, not author: drop pure CI-status noise and resolved threads; keep any comment carrying a finding, even from a bot (review bots are content, not noise). Some review bots edit one general comment in place each cycle instead of posting a new one: read the latest version of each bot comment by `updated_at` before concluding it carries nothing new.
+Filter comments by content, not author: drop pure CI-status noise and resolved threads; keep any comment carrying a finding, even from a bot. Some review bots edit one general comment in place each cycle instead of posting a new one: read the latest version of each bot comment by `updated_at` before concluding it carries nothing new.
 
 ### 2. Exit check
 
@@ -65,7 +65,7 @@ For each failing check, pull the failed job's log:
 - **GitHub Actions** (URL contains `github.com/.../actions/runs/`): `gh run view <run-id> --log-failed` once the run is complete, or `gh api --method GET repos/{owner}/{repo}/actions/jobs/<job-id>/logs` while it is still running. The run-id and job-id are in the check's details URL.
 - **CircleCI** (URL contains `circleci.com`): use the CircleCI MCP tools (load via ToolSearch if deferred), not `gh`, which can't reach CircleCI job logs. `mcp__circleci-mcp-server__get_build_failure_logs` takes the failed job's URL (the one from `gh pr checks`) or the PR's branch/project.
 
-Name the root cause before writing any fix: no patch without a named cause. Then classify:
+Name the root cause before writing any fix. Then classify:
 
 - **Branch-related** — the log points at changed code (compile, test, lint, type, or snapshot failures in touched areas) → fix it locally and commit. The commit stays local.
 - **Flaky / infra** — timeouts, runner provisioning, registry or network outages → no code change; propose a re-run in the recap.
@@ -79,7 +79,7 @@ Triage, per pr-loop.md, over every outstanding comment: unresolved threads plus 
 - **Reply only** — a design tradeoff, a possible misread of the code, a request outside this PR's stated goal, or something a later commit on the branch already resolves (name that commit): the option carries the draft reply, plus a ticket-worthy summary when deferring.
 - **Leave as is** — always present.
 
-When unsure between fix and reply, recommend the reply. Draft replies go in the recap for the user to post; this skill posts nothing.
+When unsure between fix and reply, recommend the reply. Draft replies go in the recap for the user to post.
 
 ### 5. Verify and commit
 
