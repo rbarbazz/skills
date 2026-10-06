@@ -38,7 +38,7 @@ Parse with `jq`: it runs without a permission prompt, so each pass stays hands-o
 
 ## Triage
 
-Every code change goes through the user. Walk the findings one at a time, file order. For each finding:
+Every fix for a finding goes through the user. Walk the findings one at a time, file order. For each finding:
 
 1. Quote the comment with its `file:line` and the relevant hunk.
 2. Work out the fix options you see.
