@@ -10,16 +10,20 @@ Three layers, summary on top: first a recap of what the PR does in plain terms, 
 
 ## 1. Target
 
-- No argument → the open PR for the current branch (`gh pr view`).
-- A number or URL → that PR.
-- Several PRs match the branch → ask which one.
+The argument is a PR number or URL. Without one, ask for it.
+
+Each review runs in its own worktree, so the main checkout and other reviews stay untouched. Worktrees live under `~/HiveHQ/worktrees/<repo>/pr-<number>`, next to the implementation worktrees.
 
 ```bash
 gh pr view <number> --json number,title,body,baseRefName,headRefName,files,commits
+cd ~/HiveHQ/<repo>
 git fetch origin <baseRefName>
+git worktree add --detach ~/HiveHQ/worktrees/<repo>/pr-<number> origin/<baseRefName>
+cd ~/HiveHQ/worktrees/<repo>/pr-<number>
+gh pr checkout <number>
 ```
 
-The review diffs against `HEAD`, so the local checkout must sit on the PR head branch. If it does not, `gh pr checkout <number>`. A dirty working tree stops here: ask the user to stash or commit before continuing.
+`gh pr checkout` runs inside the new worktree so the review diffs against `HEAD` on the PR head branch. When `git worktree list` already shows a worktree on the PR head branch (a previous review, or the user's own branch), reuse it and skip the add. Every later command in this skill runs from the worktree.
 
 ## 2. Orient
 
