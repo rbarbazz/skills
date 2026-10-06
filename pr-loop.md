@@ -42,8 +42,8 @@ Every fix for a finding goes through the user. Walk the findings one at a time, 
 
 1. Quote the comment with its `file:line` and the relevant hunk.
 2. Work out the fix options you see.
-3. Ask with AskUserQuestion, one finding per question, with your recommended fix and always a "leave as is" option.
-4. On an approved fix, apply it before presenting the next finding, so the user sees each change land.
+3. Ask with one AskUserQuestion call carrying a single question, with your recommended fix and always a "leave as is" option. Never batch several findings into one call: the user submits one answer per finding.
+4. Wait for that answer. On an approved fix, apply it before presenting the next finding, so the user sees each change land.
 
 Across iterations, a finding already decided gets one line pointing back to the decision, not a fresh question.
 
