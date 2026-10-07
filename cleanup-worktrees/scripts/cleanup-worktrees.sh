@@ -11,12 +11,14 @@
 #     old PR), OR
 #   - its branch tracked a remote branch that no longer exists, OR
 #   - its branch has no upstream but a PR proves it was pushed, and the
-#     remote branch no longer exists.
+#     remote branch no longer exists, OR
+#   - its branch was never pushed and holds no commit beyond origin's default
+#     branch (created, then left untouched).
 #
 # A worktree is kept (and logged) when:
 #   - it has uncommitted changes,
-#   - it is on a detached HEAD or a never-pushed branch with no merged or
-#     closed PR,
+#   - it is on a detached HEAD, or on a never-pushed branch carrying its own
+#     commits,
 #   - its repo can't be fetched (offline, auth issue).
 #
 # Only one instance runs at a time (lock at ~/.cleanup-worktrees.lock).
@@ -80,6 +82,11 @@ for repo in "${REPOS[@]}"; do
     continue
   fi
 
+  # origin/HEAD names the remote default branch; older clones lack it.
+  git -C "$main_repo" rev-parse --verify --quiet refs/remotes/origin/HEAD >/dev/null 2>&1 \
+    || git -C "$main_repo" remote set-head origin --auto >/dev/null 2>&1
+  default_ref=$(git -C "$main_repo" symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null)
+
   # ------------------------------------------------------------------------
   # 1. Remove unused linked worktrees (the main worktree is the first entry).
   # ------------------------------------------------------------------------
@@ -130,12 +137,18 @@ for repo in "${REPOS[@]}"; do
       if [[ $track == "[gone]" ]]; then
         reason="remote branch deleted"
       elif ! git -C "$main_repo" rev-parse --verify --quiet \
-               "refs/remotes/$remote/$branch" >/dev/null \
-           && [[ $pr_matches_branch == true ]]; then
-        # No upstream configured, but a PR proves the branch was pushed and
-        # the remote copy is gone now. A never-pushed branch has no PR and
-        # no remote ref, so it stays.
-        reason="remote branch deleted (PR ${pr_state:l})"
+               "refs/remotes/$remote/$branch" >/dev/null; then
+        if [[ $pr_matches_branch == true ]]; then
+          # No upstream configured, but a PR proves the branch was pushed and
+          # the remote copy is gone now.
+          reason="remote branch deleted (PR ${pr_state:l})"
+        elif [[ -n $default_ref ]] \
+             && git -C "$wt" merge-base --is-ancestor HEAD "$default_ref" 2>/dev/null; then
+          # Never pushed and every commit is already on the default branch:
+          # the worktree was created and left untouched.
+          reason="no commits beyond ${default_ref#refs/remotes/}"
+        fi
+        # A never-pushed branch carrying its own commits stays.
       fi
     fi
 

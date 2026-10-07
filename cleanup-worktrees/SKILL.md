@@ -8,8 +8,8 @@ disable-model-invocation: true
 
 Every removal goes through `scripts/cleanup-worktrees.sh` (zsh, macOS): it
 carries the guards a manual `git worktree remove` skips (uncommitted changes,
-detached HEAD, never-pushed branch, failed fetch, a lock against overlapping
-runs). Its header comment is the single source of the removal rules: read it
+detached HEAD, never-pushed branch carrying its own commits, failed fetch, a
+lock against overlapping runs). Its header comment is the single source of the removal rules: read it
 when the user asks why a worktree was or was not removed.
 
 The arguments are repo paths (any directory inside the repo works). Without
