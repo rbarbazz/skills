@@ -30,8 +30,8 @@ apply. Carry the ticket link and the links it contains.
 
 ## Evidence
 
-- **Before:** <screenshot/output/failing test run>
-  **After:** <screenshot/output/passing test run>
+- **Before:** <screenshot or output from the running app>
+  **After:** <screenshot or output from the running app>
 ```
 
 Skip all preambles and keep prose brief. Use the product's domain language.
@@ -157,7 +157,15 @@ You may use one of these, you may use several, it is unlikely you will use all o
 
 ## Evidence
 
-Screenshots when the change is visual. Otherwise a shell snippet
-(`./manage.py shell`, `rails console`), a command, or the exact test that
-failed before and passes now, with output. Proof lives here, not in
-committed scripts.
+Evidence is manual verification: what you did in a running app or shell to
+see the change working, and what you saw. When the template has a "Manual
+Testing" section, Evidence is that section, not a second one. Screenshots go in a "Visuals" section when the template has one.
+
+Screenshots when the change is visual. Otherwise the exact steps taken, or a
+shell snippet (`./manage.py shell`, `rails console`) with its output. Proof
+lives here, not in committed scripts.
+
+Automated tests are not evidence: never list test suites, test runs, or "CI
+passes" here, reviewers see them in the diff and in CI. When the change
+cannot be verified manually (a pure refactor with no visible behaviour
+change), write "Not manually testable" and say why.
