@@ -159,7 +159,8 @@ You may use one of these, you may use several, it is unlikely you will use all o
 
 Evidence is manual verification: what you did in a running app or shell to
 see the change working, and what you saw. When the template has a "Manual
-Testing" section, Evidence is that section, not a second one. Screenshots go in a "Visuals" section when the template has one.
+Testing" section, Evidence is that section, not a second one. Screenshots
+go in a "Visuals" section when the template has one.
 
 Screenshots when the change is visual. Otherwise the exact steps taken, or a
 shell snippet (`./manage.py shell`, `rails console`) with its output. Proof
