@@ -12,10 +12,17 @@ Three layers, summary on top: first a recap of what the PR does in plain terms, 
 
 The argument is a PR number or URL. Without one, ask for it.
 
-Each review runs in its own worktree, so the main checkout and other reviews stay untouched. Worktrees live under `~/HiveHQ/worktrees/<repo>/pr-<number>`, next to the implementation worktrees.
+Each review runs in its own worktree, so the main checkout and other reviews stay untouched.
 
 ```bash
-gh pr view <number> --json number,title,body,baseRefName,headRefName,files,commits
+gh pr view <number> --json number,url,title,body,baseRefName,headRefName,files,commits
+```
+
+When the session already runs in a worktree the desktop app made (the "new worktree" checkbox: cwd under `~/HiveHQ/worktrees/`, and `git worktree list` shows it is not the main checkout), review in that worktree: run `gh pr checkout <number>` there and skip the add below. The app then archives the session, and removes its worktree, once the PR merges or closes.
+
+Otherwise, add one under `~/HiveHQ/worktrees/<repo>/pr-<number>`, next to the implementation worktrees:
+
+```bash
 cd ~/HiveHQ/<repo>
 git fetch origin <baseRefName>
 git worktree add --detach ~/HiveHQ/worktrees/<repo>/pr-<number> origin/<baseRefName>
@@ -23,7 +30,9 @@ cd ~/HiveHQ/worktrees/<repo>/pr-<number>
 gh pr checkout <number>
 ```
 
-`gh pr checkout` runs inside the new worktree so the review diffs against `HEAD` on the PR head branch. When `git worktree list` already shows a worktree on the PR head branch (a previous review, or the user's own branch), reuse it and skip the add. Every later command in this skill runs from the worktree.
+`gh pr checkout` runs inside the worktree so the review diffs against `HEAD` on the PR head branch. When `git worktree list` already shows a worktree on the PR head branch (a previous review, or the user's own branch), reuse it and skip the add. Every later command in this skill runs from the worktree.
+
+Then bind the session to the PR so the app tracks it: call `mcp__ccd_pr__get_status`, and when `bound` is false, call `mcp__ccd_pr__bind_pr` with the PR `url`. Leave the monitor switches as they are (`auto_fix` off: this is a review, not the user's branch). Outside the desktop app these tools are absent: skip the bind.
 
 ## 2. Orient
 
