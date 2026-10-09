@@ -12,6 +12,9 @@ metadata:
 # Commits
 
 - Commit locally, never push. `git commit && git push` counts as a push.
+- Conventional Commits subject: `type(scope): summary`, scope optional
+  (`feat(auth): add login redirect`). Types: feat, fix, refactor, docs,
+  test, chore, perf, ci, build.
 - One logical change per commit, in dependency order (model, plumbing,
   feature). Each commit leaves the tree working.
 - Review feedback goes in a new commit on top. Amend only pre-review.
