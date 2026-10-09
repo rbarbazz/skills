@@ -26,7 +26,12 @@ apply. Carry the ticket link and the links it contains.
 ```markdown
 ## Summary
 
-<diagram, diff-sketch, or tree>
+<one sentence: what the user sees change, in product terms>
+
+<one diagram of the mechanism>
+
+- **<key term>:** <one sentence>
+- **Out of scope:** <one sentence>
 
 ## Evidence
 
@@ -34,65 +39,44 @@ apply. Carry the ticket link and the links it contains.
   **After:** <screenshot or output from the running app>
 ```
 
-Skip all preambles and keep prose brief. Use the product's domain language.
+Skip all preambles. Use the product's domain language.
 
 ## Summary
 
-Pick the smallest view that makes the key point clear.
+One effect sentence, one diagram, then bullets.
 
-- Show logic or an algorithm as pseudocode:
+- **Effect sentence:** what changes for the user. "Unpublished posts stay
+  out of the public feed until the author publishes."
+- **Diagram:** the mechanism. A paragraph that explains how parts interact,
+  which state leads where, or what happens in which order is a diagram not
+  yet drawn: draw it, and the paragraph goes.
+- **Bullets:** one **bold key term** and one sentence each: a choice that
+  differs from the ticket, a constraint, a known gap, an out-of-scope
+  follow-up. What needs more than a sentence is cut.
 
-```text
-on(save)
-  if content is unchanged
-    return cached result
-  write new content
-  return fresh result
-```
+### Find the shape first
 
-- Show runtime control flow as a call tree:
+Name the shape of the change, then draw that shape. Done when every box,
+arrow, and state carries a real name from the code or the product. GitHub
+renders Mermaid in PR bodies.
 
-```text
-submitForm
-  createSession
-    persistPrompt
-    launchAgent
-  navigateToSession
-```
-
-- Show UI structure as a component tree, including state and module boundaries that matter:
-
-```text
-<SessionPage> (apps/example/src/routes/session.tsx)
-  useSessionEvents()
-  <SessionToolbar>
-    <RunSkillButton> (packages/ui)
-```
-
-- Show file responsibility or a broad refactor as a shallow file tree:
-
-```text
-src/
-├── commands/       # parses user actions
-├── sessions/       # owns session state
-└── transport/      # sends API requests
-```
-
-- Show component interaction, control flow, or data flow with Mermaid:
+| Shape of the change | Draw it as |
+|---|---|
+| Parts calling each other in order | Mermaid `sequenceDiagram` |
+| States and the transitions between them | Mermaid `stateDiagram-v2`, with a note per state naming its product effect |
+| A decision or a data flow with branches | Mermaid `flowchart` |
+| Logic or an algorithm | Pseudocode |
+| Structure that changes shape (tree, call stack, component tree) | `diff` of that tree |
+| Who owns what after a refactor | Shallow file tree, one comment per folder |
 
 ```mermaid
-sequenceDiagram
-    participant User
-    participant UI
-    participant Daemon
-    User->>UI: choose command
-    UI->>Daemon: send expanded prompt
-    Daemon-->>UI: stream result
+stateDiagram-v2
+    [*] --> Draft: author creates
+    Draft --> Published: publish
+    Draft --> Archived: archive
+    note right of Draft: hidden from public feed
+    note right of Published: shown in public feed
 ```
-
-- Use `diff` when the point is what changes and the surrounding shape already exists. Match the diff shape to the topic.
-
-For a component change:
 
 ```diff
  <SessionPage>
@@ -102,8 +86,6 @@ For a component change:
    <SessionTimeline>
 +    <SkillResultCard />
 ```
-
-For a file-layout change:
 
 ```diff
  src/
@@ -116,44 +98,9 @@ For a file-layout change:
 +    └── stream.ts
 ```
 
-For a call-tree or call-stack change:
-
-```diff
- submitForm
-   createSession
-     persistPrompt
-+    expandSkillMention
-     launchAgent
--  navigateToSession
-+  navigateToSession
-+    subscribeToEvents
-```
-
-For a state or control-flow change:
-
-```diff
- on(save)
--  write content
-+  if content is unchanged
-+    return cached result
-+  write new content
-+  invalidate cache
-```
-
-- Show the whole block when most of it is new, when omitted context would hide ownership or order, or when the user needs a copyable target shape:
-
-```ts
-function expandSkill(command: string): string {
-  const skillName = command.slice(1);
-  return `use the ${skillName} skill`;
-}
-```
-
-
-
-Place each visual next to the short text it supports. Keep only the calls, files, props, states, and boundaries needed to answer the user's current question or the options to resolve the current discussion point.
-
-You may use one of these, you may use several, it is unlikely you will use all of them. Use your judgement and don't overwhelm the user.
+The mechanism diagram leads. A `diff` of the call tree is the code map: add
+it second, only when the reviewer needs it to find their way in the diff.
+Two visuals is the ceiling.
 
 ## Evidence
 
