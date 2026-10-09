@@ -1,12 +1,12 @@
 ---
 name: pr-review
-description: Review a GitHub PR — a plain-language summary with the files to read in order, the two-axis mattpocock-skills:code-review report, then a quiz the user answers in chat.
+description: Review a GitHub PR — a plain-language summary with the files to read in order, then the two-axis mattpocock-skills:code-review report.
 disable-model-invocation: true
 ---
 
 # PR review
 
-Three layers, summary on top: first a recap of what the PR does in plain terms, with the files to read and in what order, then the `mattpocock-skills:code-review` report so the user can go deeper, then a short quiz the user answers to check they understood the PR. Read-only on GitHub: nothing is posted, nothing is pushed.
+Two layers, summary on top: first a recap of what the PR does in plain terms, with the files to read and in what order, then the `mattpocock-skills:code-review` report so the user can go deeper. Read-only on GitHub.
 
 ## 1. Target
 
@@ -47,16 +47,15 @@ Orientation is complete when every non-trivial changed file has a place in the o
 
 Build the spec for the code-review skill: write the PR title and body to a scratchpad file, then append the content of any issue the body links (Linear key, GitHub `#123`, or URL). Invoke `mattpocock-skills:code-review` with fixed point `origin/<baseRefName>` and that file as the spec path. Let it run to its own report.
 
-## 4. Quiz
+Then split its prose into findings and give each one a severity:
 
-Write the questions the user answers in chat. Each question names one file to read and asks for something that file shows, so the answer lives in the code and the question only points at it.
+- 🔴 **Blocker**: the code does the wrong thing. A spec requirement missing or implemented wrong, or a documented-standard breach that changes behaviour.
+- 🟠 **Should fix**: the code does the right thing the wrong way. Scope creep, or a documented-standard breach that only touches convention or structure.
+- 🟡 **Judgement call**: a baseline smell, a nit, a comment or line that could go. The code-review report labels these itself.
 
-- **Two general questions** on the flow around the change: what triggers the changed code (which route, event, job, or user action reaches it), and what happens downstream once it has run (who consumes the result, what the user or system sees). Add a "why this way" question when the PR made a visible choice over an alternative (a new column instead of a computed value, a flag instead of a delete).
-- **Two or three technical questions** on the code itself: what a specific changed function or branch does, what a given input produces, or what happens in an edge case the PR handles (empty list, retry, missing field).
+A finding keeps the axis it came from.
 
-The quiz is complete when the entry point and the core logic from the reading order each carry at least one question. A PR of pure mechanical fallout (renames, dependency bumps, generated code) gets one line saying the quiz is skipped instead.
-
-## 5. Report
+## 4. Report
 
 One message, in the user's reply style (the global CLAUDE.md communication rules), on this template. Headings and table columns stay as written, so the same report reads the same way every run.
 
@@ -74,43 +73,27 @@ One message, in the user's reply style (the global CLAUDE.md communication rules
 
 Mechanical fallout: <renames, snapshots, lockfiles, one line>.
 
-| Axis | Findings | Worst |
-|-----------|----|-----|
-| Standards | <n> | <one line, or "none"> |
-| Spec | <n> | <one line, or "none"> |
+| Axis | 🔴 | 🟠 | 🟡 | Worst |
+|-----------|---|---|---|-------|
+| Standards | <n> | <n> | <n> | <one line, or "none"> |
+| Spec | <n> | <n> | <n> | <one line, or "none"> |
 
 ## Code review
 
-<the code-review report as it came, its `## Standards` and `## Spec` headings demoted to `###`>
+### Standards
 
-## Quiz
+| | File | Finding | Fix |
+|---|------|---------|-----|
+| 🔴 | `<path:line>` | <what is wrong, one sentence> | <what to do, one sentence> |
+| 🟡 | `<path:line>` | ... | ... |
 
-| # | File | Question |
-|---|------|----------|
-| 1 | `<path>` | <flow question> |
-| 2 | `<path>` | <flow question> |
-| 3 | `<path>` | <code question> |
+### Spec
 
-<one-line invitation to answer in chat>
+| | File | Finding | Fix |
+|---|------|---------|-----|
+| 🔴 | `<path:line>` | <spec line it misses, then what the code does instead> | ... |
 ```
 
-The Axis table repeats the one-line conclusion the code-review skill ends with, split per axis, no reranking across axes.
+Rows sort 🔴 first inside each axis, never across axes. An axis with no finding gets one line, "No finding", instead of an empty table. When the Spec sub-agent skipped for lack of a spec, the Spec section says so in one line. The Worst column repeats the one-line conclusion the code-review skill ends with, split per axis.
 
-## 6. Grade
-
-When the user answers, re-read the diff hunk behind each question before grading it, then reply on this template:
-
-```markdown
-| # | Verdict | Answer |
-|---|---------|--------|
-| 1 | correct | |
-| 2 | partial | <only the missing piece, with `file:line`> |
-| 3 | wrong | <the right answer, with `file:line`> |
-| 4 | skipped | <the right answer, with `file:line`> |
-
-<when an answer reveals a wrong mental model about the flow: one or two sentences that correct the model>
-
-Re-read: `<file>`, `<file>`
-```
-
-Grading is complete when every question has its row. The Re-read line lists the files behind every partial or wrong row, or is dropped when all rows are correct.
+The report is complete when every finding in the code-review output has a row and the Axis counts match the rows.
