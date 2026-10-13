@@ -26,8 +26,9 @@ Repeat until an exit condition, at most 5 iterations.
 
 ### 1. Get a review of the current head
 
-- `list_code_reviews` filtered by `prNumber`. The review of the current head is the run whose `commitSha` equals the head commit.
-- If that run is `COMPLETED`, move on. If it is `PENDING`, `REVIEWING_FILES`, or `GENERATING_SUMMARY`, wait for it. If there is no run for the head, `trigger_code_review`: a success response means the request is queued, not that the review is done.
+- `list_code_reviews` filtered by `prNumber`. The review of the current head is the newest run whose `commitSha` equals the head commit.
+- First iteration: if that run is `COMPLETED`, move on. If it is `PENDING`, `REVIEWING_FILES`, or `GENERATING_SUMMARY`, wait for it. If there is no run for the head, `trigger_code_review`: a success response means the request is queued, not that the review is done.
+- Later iterations: always `trigger_code_review`, even when the head did not move because the iteration only posted replies. Greptile re-reads the threads on re-review, so the score and the resolved state only refresh through a new run. Never ask the user whether to re-review: invoking the skill is that answer. Then wait for a run newer than the one read in the previous iteration; the older `COMPLETED` run for the same head is stale.
 - Poll `list_code_reviews` every 30 seconds, up to 10 minutes. On timeout, or on a `FAILED` or `SKIPPED` run for the head, stop and report.
 
 ### 2. Read the results
@@ -52,7 +53,7 @@ Triage, per pr-loop.md, over the Greptile findings. On a declined finding (the u
 
 ### 5. Verify, push, resolve
 
-1. Verify and commit, per pr-loop.md.
+1. Verify and commit, per pr-loop.md. Skip this step and the next when the iteration changed no code (every finding was declined): the replies are already posted, and the loop still continues.
 2. Push. If this PR is part of a gh-stack (its branch belongs to a stack), invoke the `gh-stack` skill to rebase the stack and push, so the branches above it pick up the new commit. Otherwise push the PR branch directly.
 3. Return to step 1. Leave thread resolution to Greptile: it resolves a thread on re-review once the bug is fixed.
 
