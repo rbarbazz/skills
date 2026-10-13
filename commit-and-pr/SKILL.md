@@ -33,8 +33,7 @@ apply. Carry the ticket link and the links it contains.
 
 <one diagram of the mechanism>
 
-- **<key term>:** <one sentence>
-- **Out of scope:** <one sentence>
+- **<key term>:** <the idea, in a few words>
 
 ## Evidence
 
@@ -53,9 +52,16 @@ One effect sentence, one diagram, then bullets.
 - **Diagram:** the mechanism. A paragraph that explains how parts interact,
   which state leads where, or what happens in which order is a diagram not
   yet drawn: draw it, and the paragraph goes.
-- **Bullets:** one **bold key term** and one sentence each: a choice that
-  differs from the ticket, a constraint, a known gap, an out-of-scope
-  follow-up. What needs more than a sentence is cut.
+- **Bullets:** one **bold key term** and the idea in a few words, no
+  detail: a choice that differs from the ticket, or a constraint. Only what
+  the reviewer cannot read in the diff. The reader must get the point from
+  the bold term alone. A one-mechanism change has zero or one bullet. No
+  status notes ("pending confirmation"), no "Out of scope" bullet: that
+  noise belongs in the ticket or a review comment, never in the description.
+  "**Header button kept:** avoids a layout shift once loading ends." Not:
+  "**Visual treatment:** reuses the events listing empty state layout
+  (icon in an Avatar, `RingPattern`, heading, body, contained button), with
+  an `AutoAwesome` icon to match other Assistant surfaces."
 
 ### Find the shape first
 
