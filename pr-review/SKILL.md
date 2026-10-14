@@ -1,12 +1,12 @@
 ---
 name: pr-review
-description: Review a GitHub PR — a plain-language summary with the files to read in order, then the two-axis mattpocock-skills:code-review report.
+description: Review a GitHub PR — a plain-language summary, then one table of the files to read in order with the mattpocock-skills:code-review findings beside each file.
 disable-model-invocation: true
 ---
 
 # PR review
 
-Two layers, summary on top: first a recap of what the PR does in plain terms, with the files to read and in what order, then the `mattpocock-skills:code-review` report so the user can go deeper. Read-only on GitHub.
+A recap of what the PR does in plain terms, then one table: the files to read in order, each with the `mattpocock-skills:code-review` findings that land in it. Read-only on GitHub.
 
 ## 1. Target
 
@@ -66,34 +66,21 @@ One message, in the user's reply style (the global CLAUDE.md communication rules
 
 <why the change is needed, then how the code achieves it, one short paragraph>
 
-| # | File | Look for |
-|---|------|----------|
-| 1 | `<entry point>` | <what happens there> |
-| 2 | `<core logic>` | ... |
-
-Mechanical fallout: <renames, snapshots, lockfiles, one line>.
-
 | Axis | 🔴 | 🟠 | 🟡 | Worst |
 |-----------|---|---|---|-------|
 | Standards | <n> | <n> | <n> | <one line, or "none"> |
 | Spec | <n> | <n> | <n> | <one line, or "none"> |
 
-## Code review
+## Files
 
-### Standards
+| # | File | Look for | Findings |
+|---|------|----------|----------|
+| 1 | `<entry point>` | <what happens there> | 🔴 Spec `L<n>`: <spec line it misses, then what the code does instead>. Fix: <what to do>.<br>🟡 Standards `L<n>`: <what is wrong>. Fix: <what to do>. |
+| 2 | `<core logic>` | ... | None |
 
-| | File | Finding | Fix |
-|---|------|---------|-----|
-| 🔴 | `<path:line>` | <what is wrong, one sentence> | <what to do, one sentence> |
-| 🟡 | `<path:line>` | ... | ... |
-
-### Spec
-
-| | File | Finding | Fix |
-|---|------|---------|-----|
-| 🔴 | `<path:line>` | <spec line it misses, then what the code does instead> | ... |
+Mechanical fallout: <renames, snapshots, lockfiles, one line>.
 ```
 
-Rows sort 🔴 first inside each axis, never across axes. An axis with no finding gets one line, "No finding", instead of an empty table. When the Spec sub-agent skipped for lack of a spec, the Spec section says so in one line. The Worst column repeats the one-line conclusion the code-review skill ends with, split per axis.
+One row per file, in reading order. A file that carries a finding but no reading-order line still gets a row, after the reading-order files, with "Mechanical" in Look for. Inside a cell, findings sort 🔴 first, one per line (`<br>`), each naming its axis and line. A file with no finding reads "None". When the Spec sub-agent skipped for lack of a spec, one line above the table says so. The Worst column repeats the one-line conclusion the code-review skill ends with, split per axis.
 
-The report is complete when every finding in the code-review output has a row and the Axis counts match the rows.
+The report is complete when every finding in the code-review output sits in its file's row and the Axis counts match the findings in the table.
