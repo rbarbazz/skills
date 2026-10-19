@@ -16,9 +16,9 @@ The work is the argument: a Linear ticket (`ABC-123`), a spec or plan file path,
 
 Cut the work into **steps**. A step is one idea the user can hold in their head, landed as one **green** commit: lint, typecheck, and tests pass, and the commit reads on its own. Two hundred generated lines of migration is one idea; forty lines that touch three concepts is three steps. Order steps the way the `commit-and-pr` skill orders commits.
 
-Present the slicing as a numbered list headed by the ticket or spec title, one line per step: what it changes and the files it touches. Name the concepts the run introduces (the domain nouns and the pieces being built) in this list, and use the same names in every proposal and digest after: the user's mental model builds on stable names. Ask with AskUserQuestion: `Go (Recommended)`, `Change the list`. On "change", take the user's merges, splits, reorders, or drops, re-present the list, and ask again. Slicing is complete on "Go".
+Present the slicing as a numbered list headed by the ticket or spec title, one line per step: what it changes and the files it touches. The list is message text, in full, right before each question: the message is where the user reads it. Name the concepts the run introduces (the domain nouns and the pieces being built) in this list, and use the same names in every proposal and digest after: the user's mental model builds on stable names. Ask with AskUserQuestion: `Go (Recommended)`, `Change the list`. On "change", take the user's merges, splits, reorders, or drops, re-present the list, and ask again. Slicing is complete on "Go".
 
-The list stays live: when a step teaches something that changes the later steps, re-present the remaining list and ask again.
+The list stays live: when a step teaches something that changes the later steps, re-present the remaining list as message text and ask again.
 
 ## 2. Loop over steps
 
