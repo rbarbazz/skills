@@ -1,12 +1,12 @@
 ---
 name: pr-review
-description: Review a GitHub PR — a plain-language summary, then one table of the files to read in order with the mattpocock-skills:code-review findings beside each file.
+description: Review a GitHub PR — a plain-language summary, then the files to read in order, each with the mattpocock-skills:code-review findings nested under it.
 disable-model-invocation: true
 ---
 
 # PR review
 
-A recap of what the PR does in plain terms, then one table: the files to read in order, each with the `mattpocock-skills:code-review` findings that land in it. Read-only on GitHub.
+A recap of what the PR does in plain terms, then the files to read in order, each with the `mattpocock-skills:code-review` findings that land in it nested under it. Read-only on GitHub.
 
 ## 1. Target
 
@@ -57,7 +57,7 @@ A finding keeps the axis it came from.
 
 ## 4. Report
 
-One message, in the user's reply style (the global CLAUDE.md communication rules), on this template. Headings and table columns stay as written, so the same report reads the same way every run.
+One message, in the user's reply style (the global CLAUDE.md communication rules), on this template. Headings and item shapes stay as written, so the same report reads the same way every run. Lists only: every line wraps in a narrow terminal, where a table scrolls sideways.
 
 ```markdown
 ## Summary
@@ -66,21 +66,19 @@ One message, in the user's reply style (the global CLAUDE.md communication rules
 
 <why the change is needed, then how the code achieves it, one short paragraph>
 
-| Axis | 🔴 | 🟠 | 🟡 | Worst |
-|-----------|---|---|---|-------|
-| Standards | <n> | <n> | <n> | <one line, or "none"> |
-| Spec | <n> | <n> | <n> | <one line, or "none"> |
+- **Standards**: 🔴 <n> 🟠 <n> 🟡 <n>. Worst: <one line, or "none">.
+- **Spec**: 🔴 <n> 🟠 <n> 🟡 <n>. Worst: <one line, or "none">.
 
 ## Files
 
-| # | File | Look for | Findings |
-|---|------|----------|----------|
-| 1 | `<entry point>` | <what happens there> | 🔴 Spec `L<n>`: <spec line it misses, then what the code does instead>. Fix: <what to do>.<br>🟡 Standards `L<n>`: <what is wrong>. Fix: <what to do>. |
-| 2 | `<core logic>` | ... | None |
+1. **`<entry point>`**: <what happens there>.
+   - 🔴 Spec L<n>: <spec line it misses, then what the code does instead>. Fix: <what to do>.
+   - 🟡 Standards L<n>: <what is wrong>. Fix: <what to do>.
+2. **`<core logic>`**: <what happens there>. No finding.
 
 Mechanical fallout: <renames, snapshots, lockfiles, one line>.
 ```
 
-One row per file, in reading order. A file that carries a finding but no reading-order line still gets a row, after the reading-order files, with "Mechanical" in Look for. Inside a cell, findings sort 🔴 first, one per line (`<br>`), each naming its axis and line. A file with no finding reads "None". When the Spec sub-agent skipped for lack of a spec, one line above the table says so. The Worst column repeats the one-line conclusion the code-review skill ends with, split per axis.
+One item per file, in reading order. A file that carries a finding but no reading-order line still gets an item, after the reading-order files, with "Mechanical" as what happens there. Findings nest under their file, 🔴 first, each naming its axis and line. A file with no finding ends its line with "No finding". When the Spec sub-agent skipped for lack of a spec, one line above the list says so. Worst repeats the one-line conclusion the code-review skill ends with, split per axis.
 
-The report is complete when every finding in the code-review output sits in its file's row and the Axis counts match the findings in the table.
+The report is complete when every finding in the code-review output sits under its file and the axis counts match the findings in the list.
