@@ -19,7 +19,7 @@ Steps shared by `babysit-pr` and `greploop` (PR target, review threads, one-find
 
 ## Skills in regular use
 
-Skills from this repo are named bare. Plugin skills carry their plugin prefix.
+The skills I invoke by hand. Skills that fire on their own from their description (`commit-and-pr`, `pr-stacks`, `writing-docs`, `notion-editing`) are left out. Skills from this repo are named bare. Plugin skills carry their plugin prefix.
 
 ### Shaping the work
 
@@ -31,8 +31,6 @@ Skills from this repo are named bare. Plugin skills carry their plugin prefix.
 
 - **`stepwise`**: implement one ticket, one approved commit at a time, each handed over as a digest. Its close maps every requirement to a commit and lists the gaps.
 - **`mattpocock-skills:implement`**: implement a small, simple piece of work from a spec or ticket in one go, when `stepwise` would be more ceremony than the change needs.
-- **`commit-and-pr`**: commit conventions and the draft PR body (effect sentence, one diagram, evidence).
-- **`pr-stacks`**: split multi-part work into a stack of PRs with `gh stack`.
 
 ### Reviewing
 
@@ -44,12 +42,6 @@ Skills from this repo are named bare. Plugin skills carry their plugin prefix.
 ### Understanding
 
 - **`mattpocock-skills:wait-what`**: the last message did not land. Re-pitch it with context, in Simplified Technical English and the repo's ubiquitous language.
-
-### Writing
-
-- **`writing-docs`**: structure and style for tech specs, design docs, proposals and Notion pages in my voice.
-- **`notion-editing`**: keep comment anchors intact when editing an existing Notion page.
-- **`mattpocock-skills:writing-for-agents`**: write or edit a skill, `AGENTS.md` or `CLAUDE.md`.
 
 ### Housekeeping
 
