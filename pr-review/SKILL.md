@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Review a GitHub PR as a reading guide — a verdict line, then the files in reading order, each saying what to check there, with the verified findings nested under it.
+description: Review a GitHub PR as a reading guide, with verified findings under each file.
 disable-model-invocation: true
 ---
 
@@ -10,7 +10,7 @@ A reading guide beside the diff: the user opens the PR and reads it file by file
 
 ## 1. Target
 
-The argument is a PR number or URL. Without one, the PR is the current branch's (`gh pr view` with no argument); when there is none, ask for it. The PR can be the user's own, draft or ready, or someone else's: the checkout differs, the review is the same.
+The argument is a PR number or URL. Without one, the PR is the current branch's (`gh pr view` with no argument); when there is none, ask for it.
 
 ```bash
 gh pr view <number> --json number,url,title,body,baseRefName,headRefName,isDraft,author,files,commits
@@ -20,7 +20,7 @@ Pick the checkout, first match wins:
 
 1. **The PR head branch is the current branch** (`git branch --show-current` equals `headRefName`: the user's own PR). Review in place. When `git status` shows uncommitted changes, or `git log origin/<headRefName>..HEAD` shows commits not yet pushed, the report opens with one line saying the review covers the local branch, which is ahead of the PR.
 2. **The session runs in a worktree the desktop app made** (cwd under `~/HiveHQ/worktrees/`, and `git worktree list` shows it is not the main checkout). Run `gh pr checkout <number>` there.
-3. **Otherwise, someone else's PR from the main checkout.** Add a worktree under `~/HiveHQ/worktrees/<repo>/pr-<number>`, next to the implementation worktrees, so the main checkout and other reviews stay untouched. When `git worktree list` already shows a worktree on `headRefName`, reuse it and skip the add.
+3. **Otherwise, someone else's PR from the main checkout.** Add a worktree under `~/HiveHQ/worktrees/<repo>/pr-<number>`, so the main checkout stays untouched. When `git worktree list` already shows a worktree on `headRefName`, reuse it and skip the add.
 
 ```bash
 cd ~/HiveHQ/<repo>
@@ -45,10 +45,10 @@ Orientation is complete when every non-trivial changed file has a place in the o
 
 ## 3. Review
 
-Two sources, run together. Both return findings that name a concrete input and what breaks with it; the report keeps every one.
+Two sources, run together.
 
-- **Bugs**: invoke the built-in `code-review` skill with `<number> high`. It fans finder sub-agents over the diff, verifies each candidate adversarially, and reports through `ReportFindings`: `file`, `line`, `summary`, `failure_scenario`, and a verdict of CONFIRMED or PLAUSIBLE.
-- **Spec**: one sub-agent, given the diff command and the spec sources below. Its brief: "Report (a) requirements the spec asks for that are missing or partial, (b) behaviour the diff adds that the spec never asked for, (c) requirements that look implemented but wrong. Quote the spec line and name its source for each. Under 300 words." With no body and no linked issue, skip it: the report says so in one line above the list.
+- **Bugs**: invoke the built-in `code-review` skill with `<number> high`. Its `ReportFindings` call carries each finding: `file`, `line`, `summary`, `failure_scenario`, and a verdict of CONFIRMED or PLAUSIBLE.
+- **Spec**: one sub-agent, given the diff command and the spec sources below. Its brief: "Report (a) requirements the spec asks for that are missing or partial, (b) behaviour the diff adds that the spec never asked for, (c) requirements that look implemented but wrong. Quote the spec line and name its source for each. Under 300 words." When every source past the PR body is absent, skip it: the report says so in one line above the list.
 
 The spec sources, gathered before the sub-agent starts, each as its full content:
 
@@ -57,7 +57,7 @@ The spec sources, gathered before the sub-agent starts, each as its full content
 3. The issue's parent: for Linear, the project (`get_issue` names it, `get_project` reads it) and the parent issue when there is one.
 4. The tech spec: a Linear document attached to that project (`list_documents` filtered on the project), else a Notion page the issue or project links, else a file under `docs/` or `specs/` in the repo whose name matches the branch or feature.
 
-Gathering is complete when each source is either read in full or recorded as absent. The ticket says what to build; the project and tech spec say why and within which limits, so a diff can match the ticket and still breach them.
+Gathering is complete when each source is either read in full or recorded as absent. The ticket says what to build, the project and tech spec say within which limits: a diff can match the ticket and still breach them.
 
 Severity:
 
