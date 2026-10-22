@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # PR review
 
-A reading guide beside the diff: the user opens the PR and reads it file by file with the report next to it. A verdict line, then the files in reading order, each saying what to check there, with the verified findings nested under it. Read-only on GitHub.
+A reading guide beside the diff: the user opens the PR and reads it file by file with the report next to it. A verdict line, then the files in reading order, with the verified findings nested under each. Read-only on GitHub.
 
 ## 1. Target
 
@@ -19,14 +19,15 @@ gh pr view <number> --json number,url,title,body,baseRefName,headRefName,isDraft
 Pick the checkout, first match wins:
 
 1. **The PR head branch is the current branch** (`git branch --show-current` equals `headRefName`: the user's own PR). Review in place. When `git status` shows uncommitted changes, or `git log origin/<headRefName>..HEAD` shows commits not yet pushed, the report opens with one line saying the review covers the local branch, which is ahead of the PR.
-2. **The session runs in a worktree the desktop app made** (cwd under `~/HiveHQ/worktrees/`, and `git worktree list` shows it is not the main checkout). Run `gh pr checkout <number>` there.
-3. **Otherwise, someone else's PR from the main checkout.** Add a worktree under `~/HiveHQ/worktrees/<repo>/pr-<number>`, so the main checkout stays untouched. When `git worktree list` already shows a worktree on `headRefName`, reuse it and skip the add.
+2. **The session runs in a linked worktree** (`git worktree list` shows the cwd is not the main checkout). Run `gh pr checkout <number>` there.
+3. **Otherwise, someone else's PR from the main checkout.** Add a worktree under `worktrees/<repo>/pr-<number>` next to the repo, so the main checkout stays untouched. When `git worktree list` already shows a worktree on `headRefName`, reuse it and skip the add.
 
 ```bash
-cd ~/HiveHQ/<repo>
+repo=$(git rev-parse --show-toplevel)
+wt="$repo/../worktrees/$(basename "$repo")/pr-<number>"
 git fetch origin <baseRefName>
-git worktree add --detach ~/HiveHQ/worktrees/<repo>/pr-<number> origin/<baseRefName>
-cd ~/HiveHQ/worktrees/<repo>/pr-<number>
+git worktree add --detach "$wt" origin/<baseRefName>
+cd "$wt"
 gh pr checkout <number>
 ```
 
@@ -39,7 +40,7 @@ Then bind the session to the PR so the app tracks it: call `mcp__ccd_pr__get_sta
 Read the whole diff before summarising anything (`git diff origin/<baseRefName>...HEAD`, plus `--stat`). Skip generated files and lockfiles.
 
 - **The story** — what changes for the product or the system once this PR ships, in one or two sentences, then how the code achieves it. Where the PR description and the diff disagree, the diff wins and the gap is worth a line.
-- **The reading order** — the files that carry the change: entry point first (route, command, event handler, migration), then the core logic, then plumbing and tests. One line per file: what to check there, not what the file contains ("check the refund total still subtracts the fee", not "refund logic"). Pure renames, snapshots, and mechanical fallout go in one closing line.
+- **The reading order** — the files that carry the change: entry point first (route, command, event handler, migration), then the core logic, then plumbing and tests. Pure renames, snapshots, and mechanical fallout go in one closing line.
 
 Orientation is complete when every non-trivial changed file has a place in the order or in the closing line.
 
@@ -73,16 +74,16 @@ One message, in the user's reply style (the global CLAUDE.md communication rules
 ```markdown
 ## <🔴 Blocked | 🟠 Fix first | ✅ Mergeable> · <one sentence: what changes for the product once this ships>
 
-1. `<entry point>`: <what to check there>.
+1. `<entry point>`
    🔴 L<n> Bug: <what breaks, with the concrete input>. Fix: <what to do>.
-2. `<core logic>`: <what to check there>.
+2. `<core logic>`
    🟠 L<n> Spec: <what the spec asked for, quoted, and what the diff does instead>.
-3. `<tests>`: <what the new cases cover, and what they miss>.
+3. `<tests>`
 
 Mechanical: <renames, snapshots, lockfiles, one line>.
 +<n> findings dropped: PR too big for a useful review.
 ```
 
-The verdict is 🔴 Blocked with any 🔴 finding, 🟠 Fix first with only 🟠 findings, ✅ Mergeable with none. One item per file, in reading order, one line each. A file with no finding is its line alone. A file that carries a finding but no reading-order line still gets an item, after the reading-order files, with "Mechanical" as what to check. Findings sit under their file, 🔴 first, one sentence each naming the source (Bug, Spec, Cleanup) and line, Fix kept short or left out when obvious. The "+n dropped" line appears only when the cap in step 3 cut findings.
+The verdict is 🔴 Blocked with any 🔴 finding, 🟠 Fix first with only 🟠 findings, ✅ Mergeable with none. One item per file, in reading order, the path alone. A file that carries a finding but no place in the reading order still gets an item, after the reading-order files. Findings sit under their file, 🔴 first, one sentence each naming the source (Bug, Spec, Cleanup) and line, Fix kept short or left out when obvious. The "+n dropped" line appears only when the cap in step 3 cut findings.
 
 The report is complete when every finding sits under its file and the verdict matches the worst severity in the list.
