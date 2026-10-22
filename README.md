@@ -30,6 +30,7 @@ Skills from this repo are named bare. Plugin skills carry their plugin prefix.
 ### Building
 
 - **`stepwise`**: implement one ticket, one approved commit at a time, each handed over as a digest. Its close maps every requirement to a commit and lists the gaps.
+- **`mattpocock-skills:implement`**: implement a small, simple piece of work from a spec or ticket in one go, when `stepwise` would be more ceremony than the change needs.
 - **`commit-and-pr`**: commit conventions and the draft PR body (effect sentence, one diagram, evidence).
 - **`pr-stacks`**: split multi-part work into a stack of PRs with `gh stack`.
 
