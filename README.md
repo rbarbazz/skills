@@ -17,15 +17,39 @@ done
 
 Steps shared by `babysit-pr` and `greploop` (PR target, review threads, one-finding-per-question triage, verify and commit) live in `pr-loop.md` at the repo root. Each of those skill dirs holds a `pr-loop.md` symlink to it, so the skill reads the file from its own directory.
 
-## Workflow: from ticket to PR
+## Skills in regular use
 
-Always the same chain, one ticket per `stepwise` session:
+Skills from this repo are named bare. Plugin skills carry their plugin prefix.
 
-1. `mattpocock-skills:grilling` until scope and approach are settled.
-2. `mattpocock-skills:to-spec`, when the grilling produced more than one ticket holds (optional).
-3. `mattpocock-skills:to-tickets`.
-4. `stepwise` on a ticket: one commit at a time, each step approved before it is built and handed over as a digest instead of a diff. Its close maps every ticket requirement to a commit and lists the gaps.
-5. Clear, then `mattpocock-skills:code-review` against the base commit `stepwise` reported. A fresh session reviews without the assumptions that shaped the code.
-6. `greploop` to drive the branch to a clean Greptile review.
+### Shaping the work
 
-Outside the chain: `pr-review` for someone else's PR, `babysit-pr` for a PR waiting on CI or reviewers.
+- **`mattpocock-skills:grilling`**: stress-test a plan or idea until scope and approach are settled.
+- **`mattpocock-skills:to-spec`**: turn a settled grilling into a spec, when it holds more than one ticket.
+- **`mattpocock-skills:to-tickets`**: cut a spec into tickets.
+
+### Building
+
+- **`stepwise`**: implement one ticket, one approved commit at a time, each handed over as a digest. Its close maps every requirement to a commit and lists the gaps.
+- **`commit-and-pr`**: commit conventions and the draft PR body (effect sentence, one diagram, evidence).
+- **`pr-stacks`**: split multi-part work into a stack of PRs with `gh stack`.
+
+### Reviewing
+
+- **`pr-review`**: review a PR, mine or someone else's, as a reading guide: verdict, files in reading order, verified findings under each file, spec checked against the ticket, its project and the tech spec.
+- **`ponytail:ponytail-review`**: review for over-engineering only, when a solution feels heavier than the problem. One line per finding: what to delete, what replaces it.
+- **`greploop`**: drive a draft PR through Greptile reviews until 5/5 confidence.
+- **`babysit-pr`**: sit on an open PR until CI is green and every review comment is addressed.
+
+### Understanding
+
+- **`mattpocock-skills:wait-what`**: the last message did not land. Re-pitch it with context, in Simplified Technical English and the repo's ubiquitous language.
+
+### Writing
+
+- **`writing-docs`**: structure and style for tech specs, design docs, proposals and Notion pages in my voice.
+- **`notion-editing`**: keep comment anchors intact when editing an existing Notion page.
+- **`mattpocock-skills:writing-for-agents`**: write or edit a skill, `AGENTS.md` or `CLAUDE.md`.
+
+### Housekeeping
+
+- **`cleanup-worktrees`**: remove a repo's worktrees whose PR is merged or closed, report what the kept ones still hold.
