@@ -1,26 +1,26 @@
 ---
 name: pr-review
-description: Review a GitHub PR — a verdict line, then the files to read in order, each saying what to check there, with the mattpocock-skills:code-review findings that carry a concrete failure nested under it.
+description: Review a GitHub PR as a reading guide — a verdict line, then the files in reading order, each saying what to check there, with the verified findings nested under it.
 disable-model-invocation: true
 ---
 
 # PR review
 
-A reading guide, not a substitute for the diff: the user opens the PR and reads it file by file with the report beside it. A verdict line, then the files in reading order, each saying what to check there, with the `mattpocock-skills:code-review` findings that carry a concrete failure nested under it. Read-only on GitHub.
+A reading guide beside the diff: the user opens the PR and reads it file by file with the report next to it. A verdict line, then the files in reading order, each saying what to check there, with the verified findings nested under it. Read-only on GitHub.
 
 ## 1. Target
 
-The argument is a PR number or URL. Without one, ask for it.
-
-Each review runs in its own worktree, so the main checkout and other reviews stay untouched.
+The argument is a PR number or URL. Without one, the PR is the current branch's (`gh pr view` with no argument); when there is none, ask for it. The PR can be the user's own, draft or ready, or someone else's: the checkout differs, the review is the same.
 
 ```bash
-gh pr view <number> --json number,url,title,body,baseRefName,headRefName,files,commits
+gh pr view <number> --json number,url,title,body,baseRefName,headRefName,isDraft,author,files,commits
 ```
 
-When the session already runs in a worktree the desktop app made (the "new worktree" checkbox: cwd under `~/HiveHQ/worktrees/`, and `git worktree list` shows it is not the main checkout), review in that worktree: run `gh pr checkout <number>` there and skip the add below. The app then archives the session, and removes its worktree, once the PR merges or closes.
+Pick the checkout, first match wins:
 
-Otherwise, add one under `~/HiveHQ/worktrees/<repo>/pr-<number>`, next to the implementation worktrees:
+1. **The PR head branch is the current branch** (`git branch --show-current` equals `headRefName`: the user's own PR). Review in place. When `git status` shows uncommitted changes, or `git log origin/<headRefName>..HEAD` shows commits not yet pushed, the report opens with one line saying the review covers the local branch, which is ahead of the PR.
+2. **The session runs in a worktree the desktop app made** (cwd under `~/HiveHQ/worktrees/`, and `git worktree list` shows it is not the main checkout). Run `gh pr checkout <number>` there.
+3. **Otherwise, someone else's PR from the main checkout.** Add a worktree under `~/HiveHQ/worktrees/<repo>/pr-<number>`, next to the implementation worktrees, so the main checkout and other reviews stay untouched. When `git worktree list` already shows a worktree on `headRefName`, reuse it and skip the add.
 
 ```bash
 cd ~/HiveHQ/<repo>
@@ -30,9 +30,9 @@ cd ~/HiveHQ/worktrees/<repo>/pr-<number>
 gh pr checkout <number>
 ```
 
-`gh pr checkout` runs inside the worktree so the review diffs against `HEAD` on the PR head branch. When `git worktree list` already shows a worktree on the PR head branch (a previous review, or the user's own branch), reuse it and skip the add. Every later command in this skill runs from the worktree.
+Every later command runs from that checkout, so the review diffs `origin/<baseRefName>...HEAD` on the PR head branch.
 
-Then bind the session to the PR so the app tracks it: call `mcp__ccd_pr__get_status`, and when `bound` is false, call `mcp__ccd_pr__bind_pr` with the PR `url`. Leave the monitor switches as they are (`auto_fix` off: this is a review, not the user's branch). Outside the desktop app these tools are absent: skip the bind.
+Then bind the session to the PR so the app tracks it: call `mcp__ccd_pr__get_status`, and when `bound` is false, call `mcp__ccd_pr__bind_pr` with the PR `url`. Leave the monitor switches as they are (`auto_fix` stays off on someone else's PR: this is a review, not the user's branch). Outside the desktop app these tools are absent: skip the bind.
 
 ## 2. Orient
 
@@ -45,31 +45,44 @@ Orientation is complete when every non-trivial changed file has a place in the o
 
 ## 3. Review
 
-Build the spec for the code-review skill: write the PR title and body to a scratchpad file, then append the content of any issue the body links (Linear key, GitHub `#123`, or URL). Invoke `mattpocock-skills:code-review` with fixed point `origin/<baseRefName>` and that file as the spec path. Let it run to its own report.
+Two sources, run together. Both return findings that name a concrete input and what breaks with it; the report keeps every one.
 
-Then split its prose into findings. Keep a finding only when it names a concrete input and what breaks with it ("a $10 order with a $1 fee refunds $10"). A finding without a failure scenario ("could be more readable", "consider adding a test", a naming nit) is dropped, not downgraded. Give each kept finding a severity:
+- **Bugs**: invoke the built-in `code-review` skill with `<number> high`. It fans finder sub-agents over the diff, verifies each candidate adversarially, and reports through `ReportFindings`: `file`, `line`, `summary`, `failure_scenario`, and a verdict of CONFIRMED or PLAUSIBLE.
+- **Spec**: one sub-agent, given the diff command and the spec sources below. Its brief: "Report (a) requirements the spec asks for that are missing or partial, (b) behaviour the diff adds that the spec never asked for, (c) requirements that look implemented but wrong. Quote the spec line and name its source for each. Under 300 words." With no body and no linked issue, skip it: the report says so in one line above the list.
 
-- 🔴 **Blocker**: the code does the wrong thing. A spec requirement missing or implemented wrong, or a documented-standard breach that changes behaviour.
-- 🟠 **Should fix**: the code does the right thing the wrong way. Scope creep, or a documented-standard breach that only touches convention or structure.
+The spec sources, gathered before the sub-agent starts, each as its full content:
 
-A finding keeps the axis it came from. At most 3 findings per file and 8 per PR, 🔴 first: beyond that, the PR is too big for a useful review and the report says so instead of listing more.
+1. The PR title and body.
+2. The issue the body or branch name links (Linear key, GitHub `#123`, or URL), with its comments.
+3. The issue's parent: for Linear, the project (`get_issue` names it, `get_project` reads it) and the parent issue when there is one.
+4. The tech spec: a Linear document attached to that project (`list_documents` filtered on the project), else a Notion page the issue or project links, else a file under `docs/` or `specs/` in the repo whose name matches the branch or feature.
+
+Gathering is complete when each source is either read in full or recorded as absent. The ticket says what to build; the project and tech spec say why and within which limits, so a diff can match the ticket and still breach them.
+
+Severity:
+
+- 🔴 **Blocker**: the code does the wrong thing. A CONFIRMED bug, or a spec requirement missing or implemented wrong.
+- 🟠 **Should fix**: the code does the right thing the wrong way. A PLAUSIBLE bug, a cleanup or conventions finding, or behaviour the spec never asked for.
+
+At most 3 findings per file and 8 per PR, 🔴 first: beyond that, the PR is too big for a useful review and the report says so instead of listing more.
 
 ## 4. Report
 
-One message, in the user's reply style (the global CLAUDE.md communication rules), on this template. Headings and item shapes stay as written, so the same report reads the same way every run. Lists only: every line wraps in a narrow terminal, where a table scrolls sideways.
+One message, in the user's reply style (the global CLAUDE.md communication rules), on this template. Headings and item shapes stay as written, so the same report reads the same way every run. Lists only: a list wraps in a narrow terminal where a table scrolls sideways.
 
 ```markdown
 ## <🔴 Blocked | 🟠 Fix first | ✅ Mergeable> · <one sentence: what changes for the product once this ships>
 
 1. `<entry point>`: <what to check there>.
-   🔴 L<n> Spec: <what breaks, with the concrete input>. Fix: <what to do>.
+   🔴 L<n> Bug: <what breaks, with the concrete input>. Fix: <what to do>.
 2. `<core logic>`: <what to check there>.
+   🟠 L<n> Spec: <what the spec asked for, quoted, and what the diff does instead>.
 3. `<tests>`: <what the new cases cover, and what they miss>.
 
 Mechanical: <renames, snapshots, lockfiles, one line>.
 +<n> findings dropped: PR too big for a useful review.
 ```
 
-The verdict is 🔴 Blocked with any 🔴 finding, 🟠 Fix first with only 🟠 findings, ✅ Mergeable with none. One item per file, in reading order, one line each. A file with no finding is just its line: no "No finding", no count. A file that carries a finding but no reading-order line still gets an item, after the reading-order files, with "Mechanical" as what to check. Findings sit under their file, 🔴 first, one sentence each naming the axis and line, Fix kept short or left out when obvious. The "+n dropped" line appears only when the cap in step 3 cut findings. When the Spec sub-agent skipped for lack of a spec, one line above the list says so.
+The verdict is 🔴 Blocked with any 🔴 finding, 🟠 Fix first with only 🟠 findings, ✅ Mergeable with none. One item per file, in reading order, one line each. A file with no finding is its line alone. A file that carries a finding but no reading-order line still gets an item, after the reading-order files, with "Mechanical" as what to check. Findings sit under their file, 🔴 first, one sentence each naming the source (Bug, Spec, Cleanup) and line, Fix kept short or left out when obvious. The "+n dropped" line appears only when the cap in step 3 cut findings.
 
-The report is complete when every kept finding sits under its file and the verdict matches the worst severity in the list.
+The report is complete when every finding sits under its file and the verdict matches the worst severity in the list.
