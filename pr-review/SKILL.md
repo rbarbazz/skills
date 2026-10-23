@@ -69,21 +69,14 @@ At most 3 findings per file and 8 per PR, 🔴 first: beyond that, the PR is too
 
 ## 4. Report
 
-One message, in the user's reply style (the global CLAUDE.md communication rules), on this template. Headings and item shapes stay as written, so the same report reads the same way every run. Lists only: a list wraps in a narrow terminal where a table scrolls sideways.
+The report is an artifact: a page the user keeps open beside the diff and asks questions from. The page's look is fixed in the template, the review is the data.
 
-```markdown
-## <🔴 Blocked | 🟠 Fix first | ✅ Mergeable> · <one sentence: what changes for the product once this ships>
+1. Write the review as the JSON in [references/report-schema.md](references/report-schema.md).
+2. Copy `${CLAUDE_SKILL_DIR}/assets/report.html` to the scratchpad and fill its two placeholders, `__TITLE__` with `<repo> PR <number>` and `__REVIEW_DATA__` with the JSON: a one-line substitution (`perl -pe` with the JSON in an environment variable), or Read the copy then Edit. Nothing else in the copy changes.
+3. Publish the copy with the `Artifact` tool: `capabilities: {comments: {composer_only: true}}`, `icon: "review"`, `description` the story sentence.
 
-1. `<entry point>`
-   🔴 L<n> Bug: <what breaks, with the concrete input>. Fix: <what to do>.
-2. `<core logic>`
-   🟠 L<n> Spec: <what the spec asked for, quoted, and what the diff does instead>.
-3. `<tests>`
+The chat message is one line: the verdict, the story, the artifact link. Each finding on the page carries an "Ask Claude" button that opens a comment on it. A comment sent to Claude arrives in this session: answer it in its thread with `ArtifactComments`.
 
-Mechanical: <renames, snapshots, lockfiles, one line>.
-+<n> findings dropped: PR too big for a useful review.
-```
-
-The verdict is 🔴 Blocked with any 🔴 finding, 🟠 Fix first with only 🟠 findings, ✅ Mergeable with none. One item per file, in reading order, the path alone. A file that carries a finding but no place in the reading order still gets an item, after the reading-order files. Findings sit under their file, 🔴 first, one sentence each naming the source (Bug, Spec, Cleanup) and line, Fix kept short or left out when obvious. The "+n dropped" line appears only when the cap in step 3 cut findings.
+Without the `Artifact` tool (a terminal session), print the report on the shape in [references/markdown-report.md](references/markdown-report.md) instead.
 
 The report is complete when every finding sits under its file and the verdict matches the worst severity in the list.

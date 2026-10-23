@@ -1,0 +1,275 @@
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  /* Layout: one reading column, verdict first, then the files in reading order as collapsible sections. */
+  :root {
+    --bg: #f3f5f8;
+    --surface: #ffffff;
+    --fg: #1b2129;
+    --muted: #5d6675;
+    --line: #d6dce4;
+    --accent: #0b6e99;
+    --red: #bf2638;
+    --amber: #b35f08;
+    --green: #1e8449;
+    --mono: "Maple Mono NF", "Maple Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1218; --surface: #161b23; --fg: #e4e9ef; --muted: #8e98a6; --line: #28313d;
+      --accent: #58aedb; --red: #f2667a; --amber: #eaa04b; --green: #52c27d; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1218; --surface: #161b23; --fg: #e4e9ef; --muted: #8e98a6; --line: #28313d;
+    --accent: #58aedb; --red: #f2667a; --amber: #eaa04b; --green: #52c27d; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 14px/1.55 var(--mono); font-variant-numeric: tabular-nums;
+    padding-block: 0 48px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button { font: inherit; color: inherit; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+
+  .verdict { padding-block: 32px 20px; display: grid; gap: 12px; }
+  .verdict .pr { color: var(--muted); font-size: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .verdict h1 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.3; text-wrap: balance; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--sev-bg); background: var(--sev); white-space: nowrap; }
+  .pill.blocked, .pill.blocker { --sev: var(--red); --sev-bg: var(--surface); }
+  .pill.fix, .pill.should { --sev: var(--amber); --sev-bg: var(--surface); }
+  .pill.mergeable { --sev: var(--green); --sev-bg: var(--surface); }
+  .notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; color: var(--muted); font-size: 13px; }
+  .notes li::before { content: "~ "; }
+
+  .toolbar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+    padding-block: 10px; background: var(--bg); border-bottom: 1px solid var(--line);
+  }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); }
+  .seg button { border: 0; background: transparent; padding: 5px 12px; cursor: pointer; font-size: 12px; color: var(--muted); }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { color: var(--fg); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .count { font-weight: 700; }
+  .count.blocker { color: var(--red); }
+  .count.should { color: var(--amber); }
+  .progress { margin-left: auto; font-size: 12px; color: var(--muted); }
+
+  .files { display: grid; gap: 12px; padding-block: 20px 0; counter-reset: file; }
+  details.file { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  details.file.viewed { opacity: .6; }
+  summary {
+    list-style: none; cursor: pointer; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    padding: 12px 16px; min-width: 0;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: counter(file) "."; counter-increment: file; color: var(--muted); min-width: 2ch; }
+  summary .path { font-weight: 700; word-break: break-all; min-width: 0; }
+  summary .role { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  summary .dots { display: inline-flex; gap: 6px; margin-left: auto; font-size: 12px; }
+  summary .dots span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; background: var(--sev); }
+  .dots .blocker { --sev: var(--red); }
+  .dots .should { --sev: var(--amber); }
+  summary label.viewed { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); cursor: pointer; }
+  summary label.viewed input { margin: 0; accent-color: var(--accent); }
+
+  .findings { display: grid; gap: 10px; padding: 0 16px 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .none { color: var(--muted); font-size: 13px; margin: 0; }
+  .finding {
+    display: grid; gap: 6px; padding: 10px 12px 10px 14px; border-radius: 6px;
+    border-left: 3px solid var(--sev); background: color-mix(in srgb, var(--sev) 7%, var(--surface));
+  }
+  .finding.blocker { --sev: var(--red); }
+  .finding.should { --sev: var(--amber); }
+  .finding .meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+  .finding .meta .src { color: var(--muted); }
+  .finding p { margin: 0; }
+  .finding .fix { color: var(--muted); }
+  .finding .fix b { color: var(--fg); font-weight: 500; }
+  .finding .ask {
+    justify-self: start; margin-top: 2px; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    border: 1px solid var(--line); background: var(--surface);
+  }
+  .finding .ask:hover { border-color: var(--accent); color: var(--accent); }
+  [data-filter="blocker"] .finding.should, [data-filter="should"] .finding.blocker { display: none; }
+
+  .foot { padding-block: 24px 0; color: var(--muted); font-size: 13px; display: grid; gap: 6px; }
+  .foot b { color: var(--fg); font-weight: 500; }
+  .empty { padding-block: 48px; color: var(--muted); text-align: center; }
+
+  .toast {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 6px; font-size: 12px; z-index: 20;
+  }
+  @media (prefers-reduced-motion: no-preference) { details.file { transition: opacity .15s; } }
+</style>
+
+<div class="wrap">
+  <header class="verdict" id="verdict"></header>
+  <div class="toolbar" id="toolbar" hidden>
+    <div class="seg" role="group" aria-label="Filter findings">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="blocker"><span class="count blocker" id="n-blocker">0</span> Blocker</button>
+      <button type="button" data-filter="should"><span class="count should" id="n-should">0</span> Should fix</button>
+    </div>
+    <span class="progress" id="progress"></span>
+  </div>
+  <main class="files" id="files" data-filter="all"></main>
+  <footer class="foot" id="foot"></footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="application/json" id="review-data">__REVIEW_DATA__</script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const h = (tag, attrs = {}, ...kids) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (v !== null && v !== undefined) el.setAttribute(k, v);
+    }
+    el.append(...kids.filter((k) => k !== null && k !== undefined));
+    return el;
+  };
+
+  let data;
+  try { data = JSON.parse($("review-data").textContent); } catch (e) { data = null; }
+  if (!data || !Array.isArray(data.files)) {
+    $("verdict").replaceWith(h("p", { class: "empty" }, "No review data: the placeholder in the review-data script was not filled."));
+    return;
+  }
+
+  const VERDICT = { blocked: "Blocked", fix: "Fix first", mergeable: "Mergeable" };
+  const SEVERITY = { blocker: "Blocker", should: "Should fix" };
+  const pr = data.pr || {};
+  const prLabel = pr.repo && pr.number ? `${pr.repo}#${pr.number}` : "";
+  const storageKey = `pr-review:${prLabel}:viewed`;
+  const store = {
+    read() { try { return new Set(JSON.parse(localStorage.getItem(storageKey) || "[]")); } catch (e) { return new Set(); } },
+    write(set) { try { localStorage.setItem(storageKey, JSON.stringify([...set])); } catch (e) {} },
+  };
+  const viewed = store.read();
+
+  // Verdict
+  $("verdict").append(
+    h("div", { class: "pr" },
+      pr.url ? h("a", { href: pr.url, target: "_blank", rel: "noopener" }, prLabel) : h("span", {}, prLabel),
+      pr.title ? h("span", {}, pr.title) : null),
+    h("h1", {}, h("span", { class: `pill ${data.verdict}` }, VERDICT[data.verdict] || data.verdict), h("span", {}, data.story || "")),
+    data.notes && data.notes.length ? h("ul", { class: "notes" }, ...data.notes.map((n) => h("li", {}, n))) : null,
+  );
+
+  // Counts and filter
+  const all = data.files.flatMap((f) => f.findings || []);
+  $("n-blocker").textContent = all.filter((f) => f.severity === "blocker").length;
+  $("n-should").textContent = all.filter((f) => f.severity === "should").length;
+  $("toolbar").hidden = false;
+  for (const b of document.querySelectorAll(".seg button")) {
+    b.addEventListener("click", () => {
+      $("files").dataset.filter = b.dataset.filter;
+      for (const o of document.querySelectorAll(".seg button")) o.setAttribute("aria-pressed", o === b);
+    });
+  }
+
+  // GitHub anchors a file in the PR diff by the SHA-256 of its path.
+  async function lineHref(path, line) {
+    if (!pr.url) return null;
+    try {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(path));
+      const hex = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+      return `${pr.url}/files#diff-${hex}R${line}`;
+    } catch (e) { return `${pr.url}/files`; }
+  }
+
+  // Ask Claude: the comment composer when the page has it, a copied prompt otherwise.
+  let comments = null;
+  const askLabel = () => (comments ? "Ask Claude" : "Copy as prompt");
+  window.claude?.use?.("comments").then((c) => {
+    comments = c;
+    for (const b of document.querySelectorAll(".ask")) b.textContent = askLabel();
+  });
+  let toastTimer;
+  const toast = (msg) => {
+    $("toast").textContent = msg; $("toast").hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { $("toast").hidden = true; }, 2500);
+  };
+  async function ask(card, file, f) {
+    if (comments) {
+      try {
+        const r = await comments.openComposer({ element: card });
+        if (r.opened) return;
+        toast("Close the open comment first.");
+        return;
+      } catch (e) { if (e && e.code === "unavailable") comments = null; else return; }
+    }
+    const prompt = `About the review of ${prLabel}, finding at ${file.path} L${f.line} (${f.source}, ${SEVERITY[f.severity] || f.severity}): "${f.text}" Question: `;
+    try { await navigator.clipboard.writeText(prompt); toast("Prompt copied. Paste it in the session."); }
+    catch (e) { toast("Copy failed. Select the finding text instead."); }
+  }
+
+  // Files
+  const filesEl = $("files");
+  const updateProgress = () => { $("progress").textContent = `${viewed.size} / ${data.files.length} viewed`; };
+  for (const file of data.files) {
+    const findings = file.findings || [];
+    const isViewed = viewed.has(file.path);
+    const dots = h("span", { class: "dots" });
+    for (const sev of ["blocker", "should"]) {
+      const n = findings.filter((f) => f.severity === sev).length;
+      if (n) dots.append(h("span", { class: sev, title: SEVERITY[sev] }, String(n)));
+    }
+    const check = h("input", { type: "checkbox", id: `viewed-${file.path.replace(/[^\w]/g, "-")}` });
+    check.checked = isViewed;
+    const details = h("details", { class: `file${isViewed ? " viewed" : ""}` });
+    details.open = !isViewed;
+    const summary = h("summary", {},
+      h("span", { class: "path" }, file.path),
+      file.role ? h("span", { class: "role" }, file.role) : null,
+      dots,
+      h("label", { class: "viewed" }, check, "Viewed"));
+    summary.addEventListener("click", (e) => {
+      if (!e.target.closest("label.viewed")) return;
+      e.preventDefault();
+      check.checked = !check.checked;
+      if (check.checked) viewed.add(file.path); else viewed.delete(file.path);
+      store.write(viewed);
+      details.classList.toggle("viewed", check.checked);
+      details.open = !check.checked;
+      updateProgress();
+    });
+    const list = h("div", { class: "findings" });
+    if (!findings.length) list.append(h("p", { class: "none" }, "No findings."));
+    for (const f of findings) {
+      const line = h("a", { href: pr.url ? `${pr.url}/files` : null, target: "_blank", rel: "noopener" }, `L${f.line}`);
+      lineHref(file.path, f.line).then((href) => { if (href) line.href = href; });
+      const card = h("article", { class: `finding ${f.severity}`, "data-comment-target": "" },
+        h("div", { class: "meta" },
+          h("span", { class: `pill ${f.severity}` }, SEVERITY[f.severity] || f.severity),
+          f.line ? line : null,
+          h("span", { class: "src" }, f.source)),
+        h("p", {}, f.text),
+        f.fix ? h("p", { class: "fix" }, h("b", {}, "Fix: "), f.fix) : null,
+        h("button", { type: "button", class: "ask", onclick: () => ask(card, file, f) }, askLabel()));
+      list.append(card);
+    }
+    details.append(summary, list);
+    filesEl.append(details);
+  }
+  updateProgress();
+
+  // Footer
+  if (data.mechanical) $("foot").append(h("p", {}, h("b", {}, "Mechanical: "), data.mechanical));
+  if (data.dropped) $("foot").append(h("p", {}, `+${data.dropped} findings dropped: PR too big for a useful review.`));
+})();
+</script>
