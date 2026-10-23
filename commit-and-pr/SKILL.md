@@ -31,7 +31,7 @@ apply. Carry the ticket link and the links it contains.
 
 <one sentence: what the user sees change, in product terms>
 
-<one diagram of the mechanism>
+<one diagram: inputs and results, about 5 nodes>
 
 - **<key term>:** <the idea, in a few words>
 
@@ -49,9 +49,14 @@ One effect sentence, one diagram, then bullets.
 
 - **Effect sentence:** what changes for the user. "Unpublished posts stay
   out of the public feed until the author publishes."
-- **Diagram:** the mechanism. A paragraph that explains how parts interact,
-  which state leads where, or what happens in which order is a diagram not
-  yet drawn: draw it, and the paragraph goes.
+- **Diagram:** a summary for a reader who has not opened the diff: the
+  inputs and the results, about 5 nodes and one decision. A bigger draft is
+  drawing the code: merge branches that share a result into one edge and
+  list the cases on its label, and move guards, fallbacks and error paths
+  into the bullets. Product names, "Run at 7am tour-local", over code
+  names, `queue_agent_run require_eligible`. A paragraph that explains how
+  parts interact or which state leads where is a diagram not yet drawn:
+  draw it, and the paragraph goes.
 - **Bullets:** each one a headline: a **bold key term** and a few words
   that carry the whole idea. A bullet earns its place only when the
   reviewer cannot read it in the diff: a choice that differs from the
@@ -61,18 +66,28 @@ One effect sentence, one diagram, then bullets.
 
 ### Find the shape first
 
-Name the shape of the change, then draw that shape. Done when every box,
-arrow, and state carries a real name from the code or the product. GitHub
-renders Mermaid in PR bodies.
+Name the shape of the change, then draw that shape at summary size. Done
+when a reader can say what the PR changes from the diagram alone, in one
+sentence. GitHub renders Mermaid in PR bodies.
 
 | Shape of the change | Draw it as |
 |---|---|
 | Parts calling each other in order | Mermaid `sequenceDiagram` |
 | States and the transitions between them | Mermaid `stateDiagram-v2`, with a note per state naming its product effect |
-| A decision or a data flow with branches | Mermaid `flowchart` |
+| A decision or a data flow with branches | Mermaid `flowchart`, `LR` for short flows |
 | Logic or an algorithm | Pseudocode |
 | Structure that changes shape (tree, call stack, component tree) | `diff` of that tree |
 | Who owns what after a refactor | Shallow file tree, one comment per folder |
+
+```mermaid
+flowchart LR
+    sweep[Hourly sweep] --> arm{Tour arm}
+    arm -- test --> morning[Run at 7am tour-local]
+    arm -- "control, flag off, PostHog error, unknown timezone" --> control[Run at 17:00 UTC]
+```
+
+The flag lookup and the unknown-timezone fallback behind this diagram are
+bullets, so the diagram stays at four nodes.
 
 ```mermaid
 stateDiagram-v2
